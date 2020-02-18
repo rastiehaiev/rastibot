@@ -1,0 +1,27 @@
+---
+
+spring:
+  application:
+    name: rastibot
+
+server:
+  port: 9293
+
+telegram:
+  token: ${TELEGRAM_TOKEN}
+  mode: ${TELEGRAM_MODE}
+
+rastibot:
+  google-cloud:
+    project-id: ${RASTIBOT_GOOGLE_CLOUD_PROJECT_ID}
+    pub-sub:
+      publish:
+        topics:
+          birthday-reminder:
+            name: ${RASTIBOT_GOOGLE_CLOUD_PUB_SUB_TOPICS_BIRTHDAY_REMINDER}
+      subscribe:
+        subscriptions:
+          birthday-reminder-create-success:
+            name: ${RASTIBOT_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_BIRTHDAY_REMINDER_CREATE_SUCCESS}
+          birthday-reminder-create-conflict:
+            name: ${RASTIBOT_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_BIRTHDAY_REMINDER_CREATE_CONFLICT}
