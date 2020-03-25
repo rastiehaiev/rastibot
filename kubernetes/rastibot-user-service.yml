@@ -1,0 +1,64 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rastibot-user-service
+  labels:
+    app: rastibot-user-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rastibot-user-service
+  template:
+    metadata:
+      labels:
+        app: rastibot-user-service
+    spec:
+      containers:
+        - name: rastibot-user-service
+          image: eu.gcr.io/playaround-245909/rastibot-user-service:2.0.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9294
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "production"
+            - name: DATASOURCE_URL
+              value: "127.0.0.1:5432"
+            - name: DATASOURCE_DBNAME
+              value: "rastibot_user_service"
+            - name: DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rastibot
+                  key: rastibot-user-service-password
+        - name: cloudsql-proxy
+          image: gcr.io/cloudsql-docker/gce-proxy:1.14
+          command: ["/cloud_sql_proxy",
+                    "-instances=playaround-245909:europe-west4:rastibot=tcp:5432",
+                    "-credential_file=/secrets/cloudsql/credentials.json"]
+          securityContext:
+            runAsUser: 2
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: cloudsql-instance-credentials
+              mountPath: /secrets/cloudsql
+              readOnly: true
+      volumes:
+        - name: cloudsql-instance-credentials
+          secret:
+            secretName: cloudsql-instance-credentials
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rastibot-user-service
+  labels:
+    app: rastibot-user-service
+spec:
+  ports:
+    - port: 9294
+      protocol: TCP
+  selector:
+    app: rastibot-user-service

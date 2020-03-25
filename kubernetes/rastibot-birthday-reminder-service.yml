@@ -1,0 +1,69 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rastibot-birthday-reminder-service
+  labels:
+    app: rastibot-birthday-reminder-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rastibot-birthday-reminder-service
+  template:
+    metadata:
+      labels:
+        app: rastibot-birthday-reminder-service
+    spec:
+      containers:
+        - name: rastibot-birthday-reminder-service
+          image: eu.gcr.io/playaround-245909/rastibot-birthday-reminder-service:2.0.0
+          imagePullPolicy: Always
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "production"
+            - name: DATASOURCE_URL
+              value: "127.0.0.1:5432"
+            - name: DATASOURCE_DBNAME
+              value: "rastibot_birthday_reminder_service"
+            - name: DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rastibot
+                  key: rastibot-birthday-reminder-service-password
+            - name: BIRTHDAY_REMINDER_GOOGLE_CLOUD_PROJECT_ID
+              value: "playaround-245909"
+            - name: BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_TOPICS_CHECK_BIRTHDAY_REMINDER_EXISTS_RESULT
+              value: "dev-check-birthday-reminder-exists-result"
+            - name: BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_TOPICS_CREATE_BIRTHDAY_REMINDER_RESULT
+              value: "dev-create-birthday-reminder-result"
+            - name: BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_TOPICS_BIRTHDAY_REMINDER_NOTIFICATION
+              value: "dev-birthday-reminder-notification"
+            - name: BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_TOPICS_BIRTHDAY_REMINDER_NOTIFICATION_ACTION_RESULT
+              value: "dev-birthday-reminder-notification-action-result"
+            - name: BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_CHECK_BIRTHDAY_REMINDER_EXISTS
+              value: "dev-check-birthday-reminder-exists-subscription"
+            - name: BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_CREATE_BIRTHDAY_REMINDER
+              value: "dev-create-birthday-reminder-subscription"
+            - name: BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_BIRTHDAY_REMINDER_NOTIFICATION_ACTION
+              value: "dev-birthday-reminder-notification-action-subscriber"
+            - name: BIRTHDAY_REMINDER_SERVICE_BATCH_SIZE
+              value: "100"
+            - name: BIRTHDAY_REMINDER_SERVICE_SCHEDULE_CRON
+              value: "0 7 * * * *"
+        - name: cloudsql-proxy
+          image: gcr.io/cloudsql-docker/gce-proxy:1.14
+          command: ["/cloud_sql_proxy",
+                    "-instances=playaround-245909:europe-west4:rastibot=tcp:5432",
+                    "-credential_file=/secrets/cloudsql/credentials.json"]
+          securityContext:
+            runAsUser: 2
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: cloudsql-instance-credentials
+              mountPath: /secrets/cloudsql
+              readOnly: true
+      volumes:
+        - name: cloudsql-instance-credentials
+          secret:
+            secretName: cloudsql-instance-credentials

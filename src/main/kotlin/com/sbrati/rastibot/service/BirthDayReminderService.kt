@@ -1,74 +1,56 @@
 package com.sbrati.rastibot.service
 
-import com.sbrati.rastibot.client.BirthDayReminderPublisher
-import com.sbrati.rastibot.component.MonthResolver
-import com.sbrati.rastibot.model.BirthDayReminder
-import com.sbrati.rastibot.model.Person
-import com.sbrati.rastibot.setContactFullName
-import com.sbrati.spring.starter.telegram.dsl.Transaction
-import com.sbrati.spring.starter.telegram.exception.TelegramUpdateProcessingException
-import com.sbrati.spring.starter.telegram.model.key
-import com.sbrati.spring.starter.telegram.utils.LoggerDelegate
-import com.sbrati.spring.starter.telegram.utils.getLocale
-import me.ivmg.telegram.entities.Contact
+import com.sbrati.rastibot.integration.BirthdayReminderNotificationActionPublisher
+import com.sbrati.rastibot.integration.CheckBirthDayReminderExistsPublisher
+import com.sbrati.rastibot.integration.CreateBirthDayReminderPublisher
+import com.sbrati.rastibot.model.*
+import com.sbrati.spring.boot.starter.kotlin.telegram.util.LoggerDelegate
+import com.sbrati.spring.boot.starter.kotlin.telegram.util.chatId
+import com.sbrati.telegram.domain.Event
 import me.ivmg.telegram.entities.Update
 import org.springframework.stereotype.Service
-import java.time.Month
 
 @Service
-class BirthDayReminderService(private val monthResolver: MonthResolver,
-                              private val publisher: BirthDayReminderPublisher) {
+class BirthDayReminderService(private val checkBirthDayReminderExistsPublisher: CheckBirthDayReminderExistsPublisher,
+                              private val createBirthDayReminderPublisher: CreateBirthDayReminderPublisher,
+                              private val birthdayReminderNotificationActionPublisher: BirthdayReminderNotificationActionPublisher) {
 
     private val logger by LoggerDelegate()
 
-    fun processContact(update: Update, transaction: Transaction) {
-        val locale = update.getLocale()
-        val contact = update.message?.contact
-                ?: throw TelegramUpdateProcessingException(key("error.birthdayreminder.contact.should.be.provided"), locale)
-        transaction.setContactFullName(contact)
-        transaction.setContact(contact)
+    fun checkReminderAlreadyExists(reminder: BirthDayReminder) {
+        val request = CheckReminderExistsRequest(reminder.chatId!!, reminder.contact!!.userId!!)
+        val event = createEvent(reminder.chatId!!, request)
+        logger.info("Checking if reminder exists: ${request}.")
+        checkBirthDayReminderExistsPublisher.publish(event)
     }
 
-    fun processMonth(update: Update, transaction: Transaction) {
-        val locale = update.getLocale()
-        val monthAsString = update.message?.text
-                ?: throw TelegramUpdateProcessingException(key("error.birthdayreminder.month.should.be.provided"), locale)
-        val month = monthResolver.resolve(monthAsString)
-                ?: throw TelegramUpdateProcessingException(key("error.birthdayreminder.valid.month.should.be.provided"), locale)
-        transaction.setMonth(month)
-    }
-
-    fun processDay(update: Update, transaction: Transaction) {
-        val locale = update.getLocale()
-        val day = update.message?.text?.toIntOrNull()
-                ?: throw TelegramUpdateProcessingException(key("error.birthdayreminder.day.should.be.provided"), locale)
-
-        val month = transaction.getMonth("month")
-        val monthLength = month.length(true)
-        if (day < 1 || day > monthLength) {
-            throw TelegramUpdateProcessingException(key("error.birthdayreminder.valid.day.should.be.provided").arg(monthLength.toString()), locale)
-        }
-
-        val contact = transaction.getContact()
-
+    fun createReminder(reminder: BirthDayReminder) {
+        val chatId = reminder.chatId!!
+        val contact = reminder.contact!!
         val person = Person(contact.userId!!, contact.firstName, contact.lastName)
-        val birthDayReminder = BirthDayReminder(chatId = update.message!!.chat.id,
-                day = day,
-                month = month.value,
-                person = person)
-        logger.info("Creating reminder $birthDayReminder.")
-        publisher.createReminder(birthDayReminder)
+        val birthday = Birthday(reminder.day!!, reminder.month, reminder.year)
+        val request = CreateReminderRequest(chatId, person, birthday, reminder.overrideExisting)
+        val event = createEvent(chatId, request)
+        logger.info("Creating reminder: ${request}.")
+        createBirthDayReminderPublisher.publish(event)
     }
 
-    private fun Transaction.setMonth(month: Month) {
-        this.put("month", month)
+    fun reactOnNotificationAction(update: Update, notificationActionCallback: NotificationActionCallback) {
+        val notificationAction = NotificationAction()
+        notificationAction.notificationId = notificationActionCallback.notificationId
+        notificationAction.callbackQueryId = update.callbackQuery?.id
+        notificationAction.action = notificationActionCallback.action
+
+        logger.info("React on notification action: ${notificationAction}.")
+        val event = createEvent(update.chatId()!!, notificationAction)
+        birthdayReminderNotificationActionPublisher.publish(event)
     }
 
-    private fun Transaction.setContact(contact: Contact) {
-        this.put("contact", contact)
-    }
-
-    private fun Transaction.getContact(): Contact {
-        return this.get("contact") as Contact
+    private fun <P> createEvent(chatId: Long, payload: P, timestamp: Long = System.currentTimeMillis()): Event<P> {
+        val event = Event<P>()
+        event.chatId = chatId
+        event.timestamp = timestamp
+        event.payload = payload
+        return event
     }
 }

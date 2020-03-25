@@ -1,0 +1,49 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rastibot
+  labels:
+    app: rastibot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rastibot
+  template:
+    metadata:
+      labels:
+        app: rastibot
+    spec:
+      containers:
+        - name: rastibot
+          image: eu.gcr.io/playaround-245909/rastibot:2.0.0
+          imagePullPolicy: Always
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "production"
+            - name: TELEGRAM_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: rastibot
+                  key: telegram-token
+            - name: TELEGRAM_MODE
+              value: polling
+            - name: RASTIBOT_GOOGLE_CLOUD_PROJECT_ID
+              value: "playaround-245909"
+            - name: RASTIBOT_USER_SERVICE_URL
+              value: "rastibot-user-service:9294"
+            - name: RASTIBOT_GOOGLE_CLOUD_PUB_SUB_TOPICS_CHECK_BIRTHDAY_REMINDER_EXISTS
+              value: "dev-check-birthday-reminder-exists"
+            - name: RASTIBOT_GOOGLE_CLOUD_PUB_SUB_TOPICS_CREATE_BIRTHDAY_REMINDER
+              value: "dev-create-birthday-reminder"
+            - name: RASTIBOT_GOOGLE_CLOUD_PUB_SUB_TOPICS_BIRTHDAY_REMINDER_NOTIFICATION_ACTION
+              value: "dev-birthday-reminder-notification-action"
+            - name: RASTIBOT_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_CHECK_BIRTHDAY_REMINDER_RESULT
+              value: "dev-check-birthday-reminder-exists-result-subscription"
+            - name: RASTIBOT_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_CREATE_BIRTHDAY_REMINDER_RESULT
+              value: "dev-create-birthday-reminder-result-subscription"
+            - name: RASTIBOT_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_BIRTHDAY_REMINDER_NOTIFICATION
+              value: "dev-birthday-reminder-notification-subscription"
+            - name: RASTIBOT_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_BIRTHDAY_REMINDER_NOTIFICATION_ACTION_RESULT
+              value: "dev-birthday-reminder-notification-action-result-subscription"

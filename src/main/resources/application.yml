@@ -4,24 +4,33 @@ spring:
   application:
     name: rastibot
 
-server:
-  port: 9293
-
 telegram:
   token: ${TELEGRAM_TOKEN}
   mode: ${TELEGRAM_MODE}
+  logLevel: none
+
+google-cloud:
+  project-id: ${RASTIBOT_GOOGLE_CLOUD_PROJECT_ID}
+  pub-sub:
+    publish:
+      topics:
+        - key: check-birthday-reminder-exists
+          name: ${RASTIBOT_GOOGLE_CLOUD_PUB_SUB_TOPICS_CHECK_BIRTHDAY_REMINDER_EXISTS}
+        - key: create-birthday-reminder
+          name: ${RASTIBOT_GOOGLE_CLOUD_PUB_SUB_TOPICS_CREATE_BIRTHDAY_REMINDER}
+        - key: birthday-reminder-notification-action
+          name: ${RASTIBOT_GOOGLE_CLOUD_PUB_SUB_TOPICS_BIRTHDAY_REMINDER_NOTIFICATION_ACTION}
+    subscribe:
+      subscriptions:
+        - key: check-birthday-reminder-exists-result
+          name: ${RASTIBOT_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_CHECK_BIRTHDAY_REMINDER_RESULT}
+        - key: create-birthday-reminder-result
+          name: ${RASTIBOT_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_CREATE_BIRTHDAY_REMINDER_RESULT}
+        - key: birthday-reminder-notification
+          name: ${RASTIBOT_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_BIRTHDAY_REMINDER_NOTIFICATION}
+        - key: birthday-reminder-notification-action-result
+          name: ${RASTIBOT_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_BIRTHDAY_REMINDER_NOTIFICATION_ACTION_RESULT}
 
 rastibot:
-  google-cloud:
-    project-id: ${RASTIBOT_GOOGLE_CLOUD_PROJECT_ID}
-    pub-sub:
-      publish:
-        topics:
-          birthday-reminder:
-            name: ${RASTIBOT_GOOGLE_CLOUD_PUB_SUB_TOPICS_BIRTHDAY_REMINDER}
-      subscribe:
-        subscriptions:
-          birthday-reminder-create-success:
-            name: ${RASTIBOT_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_BIRTHDAY_REMINDER_CREATE_SUCCESS}
-          birthday-reminder-create-conflict:
-            name: ${RASTIBOT_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_BIRTHDAY_REMINDER_CREATE_CONFLICT}
+  user-service:
+    url: ${RASTIBOT_USER_SERVICE_URL}
