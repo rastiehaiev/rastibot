@@ -34,19 +34,19 @@ spec:
             - name: RASTIBOT_USER_SERVICE_URL
               value: "rastibot-user-service:9294"
             - name: RASTIBOT_GOOGLE_CLOUD_PUB_SUB_TOPICS_CHECK_BIRTHDAY_REMINDER_EXISTS
-              value: "dev-check-birthday-reminder-exists"
+              value: "prod-check-birthday-reminder-exists"
             - name: RASTIBOT_GOOGLE_CLOUD_PUB_SUB_TOPICS_CREATE_BIRTHDAY_REMINDER
-              value: "dev-create-birthday-reminder"
+              value: "prod-create-birthday-reminder"
             - name: RASTIBOT_GOOGLE_CLOUD_PUB_SUB_TOPICS_BIRTHDAY_REMINDER_NOTIFICATION_ACTION
-              value: "dev-birthday-reminder-notification-action"
+              value: "prod-birthday-reminder-notification-action"
             - name: RASTIBOT_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_CHECK_BIRTHDAY_REMINDER_RESULT
-              value: "dev-check-birthday-reminder-exists-result-subscription"
+              value: "prod-check-birthday-reminder-exists-result-subscription"
             - name: RASTIBOT_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_CREATE_BIRTHDAY_REMINDER_RESULT
-              value: "dev-create-birthday-reminder-result-subscription"
+              value: "prod-create-birthday-reminder-result-subscription"
             - name: RASTIBOT_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_BIRTHDAY_REMINDER_NOTIFICATION
-              value: "dev-birthday-reminder-notification-subscription"
+              value: "prod-birthday-reminder-notification-subscription"
             - name: RASTIBOT_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_BIRTHDAY_REMINDER_NOTIFICATION_ACTION_RESULT
-              value: "dev-birthday-reminder-notification-action-result-subscription"
+              value: "prod-birthday-reminder-notification-action-result-subscription"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -83,19 +83,19 @@ spec:
             - name: BIRTHDAY_REMINDER_GOOGLE_CLOUD_PROJECT_ID
               value: "playaround-245909"
             - name: BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_TOPICS_CHECK_BIRTHDAY_REMINDER_EXISTS_RESULT
-              value: "dev-check-birthday-reminder-exists-result"
+              value: "prod-check-birthday-reminder-exists-result"
             - name: BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_TOPICS_CREATE_BIRTHDAY_REMINDER_RESULT
-              value: "dev-create-birthday-reminder-result"
+              value: "prod-create-birthday-reminder-result"
             - name: BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_TOPICS_BIRTHDAY_REMINDER_NOTIFICATION
-              value: "dev-birthday-reminder-notification"
+              value: "prod-birthday-reminder-notification"
             - name: BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_TOPICS_BIRTHDAY_REMINDER_NOTIFICATION_ACTION_RESULT
-              value: "dev-birthday-reminder-notification-action-result"
+              value: "prod-birthday-reminder-notification-action-result"
             - name: BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_CHECK_BIRTHDAY_REMINDER_EXISTS
-              value: "dev-check-birthday-reminder-exists-subscription"
+              value: "prod-check-birthday-reminder-exists-subscription"
             - name: BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_CREATE_BIRTHDAY_REMINDER
-              value: "dev-create-birthday-reminder-subscription"
+              value: "prod-create-birthday-reminder-subscription"
             - name: BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_BIRTHDAY_REMINDER_NOTIFICATION_ACTION
-              value: "dev-birthday-reminder-notification-action-subscriber"
+              value: "prod-birthday-reminder-notification-action-subscription"
             - name: BIRTHDAY_REMINDER_SERVICE_BATCH_SIZE
               value: "100"
             - name: BIRTHDAY_REMINDER_SERVICE_SCHEDULE_CRON
