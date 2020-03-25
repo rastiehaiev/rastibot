@@ -15,27 +15,20 @@ spec:
       labels:
         app: rastibot
     spec:
-      volumes:
-        - name: creds-dir
-          hostPath:
-            path: /data/rastibot/creds
       containers:
         - name: rastibot
           image: eu.gcr.io/playaround-245909/rastibot:2.0.0
           imagePullPolicy: Always
-          terminationMessagePath: "/Users/roman-rastiehaiev-developer/.tmp/rastibot.log"
-          volumeMounts:
-            - name: creds-dir
-              mountPath: /etc/rastibot/creds
           env:
             - name: SPRING_PROFILES_ACTIVE
-              value: "development"
+              value: "production"
             - name: TELEGRAM_TOKEN
-              value: 869303274:AAGStlaMx75wMfwZSNnnFyhHdScoALsDS2A
+              valueFrom:
+                secretKeyRef:
+                  name: rastibot
+                  key: telegram-token
             - name: TELEGRAM_MODE
               value: polling
-            - name: GOOGLE_APPLICATION_CREDENTIALS
-              value: "/etc/rastibot/creds/playaround-245909-d902f867f31b.json"
             - name: RASTIBOT_GOOGLE_CLOUD_PROJECT_ID
               value: "playaround-245909"
             - name: RASTIBOT_USER_SERVICE_URL
@@ -71,28 +64,22 @@ spec:
       labels:
         app: rastibot-birthday-reminder-service
     spec:
-      volumes:
-        - name: creds-dir
-          hostPath:
-            path: /data/rastibot/creds
       containers:
         - name: rastibot-birthday-reminder-service
           image: eu.gcr.io/playaround-245909/rastibot-birthday-reminder-service:2.0.0
           imagePullPolicy: Always
-          volumeMounts:
-            - name: creds-dir
-              mountPath: /etc/rastibot/creds
           env:
             - name: SPRING_PROFILES_ACTIVE
-              value: "development"
-            - name: GOOGLE_APPLICATION_CREDENTIALS
-              value: "/etc/rastibot/creds/playaround-245909-d902f867f31b.json"
+              value: "production"
             - name: DATASOURCE_URL
-              value: "postgres-birthday-reminder-service:5432"
+              value: "127.0.0.1:5432"
             - name: DATASOURCE_DBNAME
               value: "rastibot_birthday_reminder_service"
             - name: DATASOURCE_PASSWORD
-              value: "birthday_reminder_service_password"
+              valueFrom:
+                secretKeyRef:
+                  name: rastibot
+                  key: rastibot-birthday-reminder-service-password
             - name: BIRTHDAY_REMINDER_GOOGLE_CLOUD_PROJECT_ID
               value: "playaround-245909"
             - name: BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_TOPICS_CHECK_BIRTHDAY_REMINDER_EXISTS_RESULT
@@ -113,6 +100,22 @@ spec:
               value: "100"
             - name: BIRTHDAY_REMINDER_SERVICE_SCHEDULE_CRON
               value: "0 7 * * * *"
+        - name: cloudsql-proxy
+          image: gcr.io/cloudsql-docker/gce-proxy:1.14
+          command: ["/cloud_sql_proxy",
+                    "-instances=playaround-245909:europe-west4:rastibot=tcp:5432",
+                    "-credential_file=/secrets/cloudsql/credentials.json"]
+          securityContext:
+            runAsUser: 2
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: cloudsql-instance-credentials
+              mountPath: /secrets/cloudsql
+              readOnly: true
+      volumes:
+        - name: cloudsql-instance-credentials
+          secret:
+            secretName: cloudsql-instance-credentials
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -138,13 +141,32 @@ spec:
             - containerPort: 9294
           env:
             - name: SPRING_PROFILES_ACTIVE
-              value: "development"
+              value: "production"
             - name: DATASOURCE_URL
-              value: "postgres-user-service:5432"
+              value: "127.0.0.1:5432"
             - name: DATASOURCE_DBNAME
               value: "rastibot_user_service"
             - name: DATASOURCE_PASSWORD
-              value: "rastibot_user_service_password"
+              valueFrom:
+                secretKeyRef:
+                  name: rastibot
+                  key: rastibot-user-service-password
+        - name: cloudsql-proxy
+          image: gcr.io/cloudsql-docker/gce-proxy:1.14
+          command: ["/cloud_sql_proxy",
+                    "-instances=playaround-245909:europe-west4:rastibot=tcp:5432",
+                    "-credential_file=/secrets/cloudsql/credentials.json"]
+          securityContext:
+            runAsUser: 2
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: cloudsql-instance-credentials
+              mountPath: /secrets/cloudsql
+              readOnly: true
+      volumes:
+        - name: cloudsql-instance-credentials
+          secret:
+            secretName: cloudsql-instance-credentials
 ---
 apiVersion: v1
 kind: Service
@@ -158,89 +180,3 @@ spec:
       protocol: TCP
   selector:
     app: rastibot-user-service
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: postgres-user-service
-  labels:
-    app: postgres-user-service
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: postgres-user-service
-  template:
-    metadata:
-      labels:
-        app: postgres-user-service
-    spec:
-      containers:
-        - name: postgres-user-service
-          image: sameersbn/postgresql:10-2
-          ports:
-            - containerPort: 5432
-          env:
-            - name: DB_NAME
-              value: "rastibot_user_service"
-            - name: DB_USER
-              value: "rastibot-user-service"
-            - name: DB_PASS
-              value: "rastibot_user_service_password"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: postgres-user-service
-  labels:
-    app: postgres-user-service
-spec:
-  ports:
-    - port: 5433
-      protocol: TCP
-  selector:
-    app: postgres-user-service
-  clusterIP: None
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: postgres-birthday-reminder-service
-  labels:
-    app: postgres-birthday-reminder-service
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: postgres-birthday-reminder-service
-  template:
-    metadata:
-      labels:
-        app: postgres-birthday-reminder-service
-    spec:
-      containers:
-        - name: postgres-birthday-reminder-service
-          image: sameersbn/postgresql:10-2
-          ports:
-            - containerPort: 5432
-          env:
-            - name: DB_NAME
-              value: "rastibot_birthday_reminder_service"
-            - name: DB_USER
-              value: "rastibot-birthday-reminder-service"
-            - name: DB_PASS
-              value: "birthday_reminder_service_password"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: postgres-birthday-reminder-service
-  labels:
-    app: postgres-birthday-reminder-service
-spec:
-  ports:
-    - port: 5434
-      protocol: TCP
-  selector:
-    app: postgres-birthday-reminder-service
-  clusterIP: None
