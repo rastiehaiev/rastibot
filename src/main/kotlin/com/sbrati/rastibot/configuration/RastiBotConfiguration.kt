@@ -30,7 +30,7 @@ open class RastiBotConfiguration {
 
     @Bean
     open fun requestLimiter(): RequestLimiter {
-        return RequestLimiter(allowedRequestsPerMinute = 40, banDurationSeconds = 120 )
+        return RequestLimiter(allowedRequestsPerMinute = 40, banDurationSeconds = 120)
     }
 
     @Bean
@@ -90,10 +90,14 @@ open class RastiBotConfiguration {
                     message(key = "birthdayreminder.info.specify.contact", args = listOf(progress.firstName))
                 }
                 contact { _, contact, progress ->
-                    progress.contact = contact
-                    logger.info("Received contact: $contact")
-                    reminderService.checkReminderAlreadyExists(progress)
-                    nextStage()
+                    if (contact.userId == null) {
+                        finish { message { key = "birthdayreminder.error.unable.to.create.reminder.for.contact.without.id" } }
+                    } else {
+                        progress.contact = contact
+                        logger.debug("Received contact: $contact")
+                        reminderService.checkReminderAlreadyExists(progress)
+                        nextStage()
+                    }
                 }
             }
             stage("process_contact_validation") {

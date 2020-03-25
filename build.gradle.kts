@@ -20,7 +20,7 @@ repositories {
 }
 
 group = "com.sbrati.rastibot"
-version = "2.0.0"
+version = "2.0.1"
 
 dependencies {
     implementation(platform("org.springframework.cloud:spring-cloud-dependencies:Greenwich.RELEASE"))
