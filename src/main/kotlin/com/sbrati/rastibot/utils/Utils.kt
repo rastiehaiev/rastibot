@@ -16,3 +16,15 @@ fun Update.chatDetails(): String {
     val from = this.message?.from ?: return "<unknown>"
     return from.firstName + (from.lastName?.prependIndent(" ") ?: "") + "(id=${from.id})"
 }
+
+fun Boolean.status(): String {
+    return if (this) {
+        "UP"
+    } else {
+        "DOWN"
+    }
+}
+
+fun Long?.orUnknown(): String {
+    return this?.toString() ?: "?"
+}

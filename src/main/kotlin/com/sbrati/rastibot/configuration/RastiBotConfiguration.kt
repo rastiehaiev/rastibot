@@ -3,8 +3,11 @@ package com.sbrati.rastibot.configuration
 import com.sbrati.rastibot.instruments.BirthDayHelper
 import com.sbrati.rastibot.model.*
 import com.sbrati.rastibot.service.BirthDayReminderService
+import com.sbrati.rastibot.service.StatisticsService
 import com.sbrati.rastibot.utils.chatDetails
 import com.sbrati.rastibot.utils.fullName
+import com.sbrati.rastibot.utils.orUnknown
+import com.sbrati.rastibot.utils.status
 import com.sbrati.spring.boot.starter.kotlin.telegram.command.TelegramCommand
 import com.sbrati.spring.boot.starter.kotlin.telegram.command.impl.NoOpCommand
 import com.sbrati.spring.boot.starter.kotlin.telegram.component.RequestLimiter
@@ -221,6 +224,26 @@ open class RastiBotConfiguration {
     }
 
     @Bean
+    open fun stats(statisticsService: StatisticsService): TelegramCommand<NoOpCommand> {
+        return stats {
+            stage("stats") {
+                start {
+                    val statistics = statisticsService.getStatistics()
+                    message {
+                        key = "stats.info.display.statistics.information"
+                        args = listOf(
+                                statistics.userServiceUp.status(),
+                                statistics.usersCount.orUnknown(),
+                                statistics.reminderServiceUp.status(),
+                                statistics.remindersCount.orUnknown())
+                        parseMode = ParseMode.MARKDOWN
+                    }
+                }
+            }
+        }
+    }
+
+    @Bean
     open fun telegramGlobalOperations(birthDayHelper: BirthDayHelper,
                                       reminderService: BirthDayReminderService): TelegramGlobalOperations {
         return globalOperations {
@@ -286,6 +309,14 @@ open class RastiBotConfiguration {
 
     private fun feedback(operations: TelegramCommand<NoOpCommand>.() -> Unit): TelegramCommand<NoOpCommand> {
         return object : TelegramCommand<NoOpCommand>("feedback") {
+            override fun createProgressEntity(): NoOpCommand {
+                return NoOpCommand()
+            }
+        }.apply(operations)
+    }
+
+    private fun stats(operations: TelegramCommand<NoOpCommand>.() -> Unit): TelegramCommand<NoOpCommand> {
+        return object : TelegramCommand<NoOpCommand>("stats") {
             override fun createProgressEntity(): NoOpCommand {
                 return NoOpCommand()
             }

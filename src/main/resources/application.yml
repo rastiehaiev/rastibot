@@ -35,3 +35,5 @@ rastibot:
   admin-chat-id: ${RASTIBOT_ADMIN_CHAT_ID}
   user-service:
     url: ${RASTIBOT_USER_SERVICE_URL}
+  birthday-reminder-service:
+    url: ${RASTIBOT_BIRTHDAY_REMINDER_SERVICE_URL}

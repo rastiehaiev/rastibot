@@ -15,4 +15,7 @@ interface UserServiceClient {
 
     @PutMapping("/users/chat/{id}")
     fun createOrUpdate(@PathVariable("id") chatId: Long, @RequestBody user: User)
+
+    @GetMapping("/users/count")
+    fun count(): Long
 }

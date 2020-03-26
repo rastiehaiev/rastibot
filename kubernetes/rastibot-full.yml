@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: rastibot
-          image: eu.gcr.io/playaround-245909/rastibot:2.0.2
+          image: eu.gcr.io/playaround-245909/rastibot:2.0.3
           imagePullPolicy: Always
           env:
             - name: SPRING_PROFILES_ACTIVE
@@ -38,6 +38,8 @@ spec:
               value: "playaround-245909"
             - name: RASTIBOT_USER_SERVICE_URL
               value: "rastibot-user-service:9294"
+            - name: RASTIBOT_BIRTHDAY_REMINDER_SERVICE_URL
+              value: "rastibot-birthday-reminder-service:9294"
             - name: RASTIBOT_GOOGLE_CLOUD_PUB_SUB_TOPICS_CHECK_BIRTHDAY_REMINDER_EXISTS
               value: "prod-check-birthday-reminder-exists"
             - name: RASTIBOT_GOOGLE_CLOUD_PUB_SUB_TOPICS_CREATE_BIRTHDAY_REMINDER
@@ -71,7 +73,7 @@ spec:
     spec:
       containers:
         - name: rastibot-birthday-reminder-service
-          image: eu.gcr.io/playaround-245909/rastibot-birthday-reminder-service:2.0.1
+          image: eu.gcr.io/playaround-245909/rastibot-birthday-reminder-service:2.0.2
           imagePullPolicy: Always
           env:
             - name: SPRING_PROFILES_ACTIVE
@@ -122,6 +124,20 @@ spec:
           secret:
             secretName: cloudsql-instance-credentials
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rastibot-birthday-reminder-service
+  labels:
+    app: rastibot-birthday-reminder-service
+spec:
+  ports:
+    - port: 9294
+      protocol: TCP
+  selector:
+    app: rastibot-user-service
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -140,7 +156,7 @@ spec:
     spec:
       containers:
         - name: rastibot-user-service
-          image: eu.gcr.io/playaround-245909/rastibot-user-service:2.0.0
+          image: eu.gcr.io/playaround-245909/rastibot-user-service:2.0.1
           imagePullPolicy: Always
           ports:
             - containerPort: 9294
