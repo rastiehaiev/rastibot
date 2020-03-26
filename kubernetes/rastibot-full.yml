@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: rastibot
-          image: eu.gcr.io/playaround-245909/rastibot:2.0.1
+          image: eu.gcr.io/playaround-245909/rastibot:2.0.2
           imagePullPolicy: Always
           env:
             - name: SPRING_PROFILES_ACTIVE
@@ -29,6 +29,11 @@ spec:
                   key: telegram-token
             - name: TELEGRAM_MODE
               value: polling
+            - name: RASTIBOT_ADMIN_CHAT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: rastibot
+                  key: admin-chat-id
             - name: RASTIBOT_GOOGLE_CLOUD_PROJECT_ID
               value: "playaround-245909"
             - name: RASTIBOT_USER_SERVICE_URL
@@ -66,7 +71,7 @@ spec:
     spec:
       containers:
         - name: rastibot-birthday-reminder-service
-          image: eu.gcr.io/playaround-245909/rastibot-birthday-reminder-service:2.0.0
+          image: eu.gcr.io/playaround-245909/rastibot-birthday-reminder-service:2.0.1
           imagePullPolicy: Always
           env:
             - name: SPRING_PROFILES_ACTIVE

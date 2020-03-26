@@ -32,5 +32,6 @@ google-cloud:
           name: ${RASTIBOT_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_BIRTHDAY_REMINDER_NOTIFICATION_ACTION_RESULT}
 
 rastibot:
+  admin-chat-id: ${RASTIBOT_ADMIN_CHAT_ID}
   user-service:
     url: ${RASTIBOT_USER_SERVICE_URL}

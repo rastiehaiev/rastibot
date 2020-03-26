@@ -3,6 +3,7 @@ package com.sbrati.rastibot.configuration
 import com.sbrati.rastibot.instruments.BirthDayHelper
 import com.sbrati.rastibot.model.*
 import com.sbrati.rastibot.service.BirthDayReminderService
+import com.sbrati.rastibot.utils.chatDetails
 import com.sbrati.rastibot.utils.fullName
 import com.sbrati.spring.boot.starter.kotlin.telegram.command.TelegramCommand
 import com.sbrati.spring.boot.starter.kotlin.telegram.command.impl.NoOpCommand
@@ -197,6 +198,29 @@ open class RastiBotConfiguration {
     }
 
     @Bean
+    open fun feedbackCommand(): TelegramCommand<NoOpCommand> {
+        return feedback {
+            stage("feedback") {
+                start { message { key = "feedback.info.specify.your.feedback" } }
+                text { update, text, _ ->
+                    compoundMessage {
+                        user {
+                            message { key = "feedback.info.thanks.for.your.feedback" }
+                        }
+                        admin {
+                            message {
+                                key = "feedback.info.admin.message"
+                                args = listOf(update.chatDetails(), text)
+                                parseMode = ParseMode.MARKDOWN
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Bean
     open fun telegramGlobalOperations(birthDayHelper: BirthDayHelper,
                                       reminderService: BirthDayReminderService): TelegramGlobalOperations {
         return globalOperations {
@@ -256,6 +280,14 @@ open class RastiBotConfiguration {
         return object : TelegramCommand<BirthDayReminder>("birthdayreminder") {
             override fun createProgressEntity(): BirthDayReminder {
                 return BirthDayReminder()
+            }
+        }.apply(operations)
+    }
+
+    private fun feedback(operations: TelegramCommand<NoOpCommand>.() -> Unit): TelegramCommand<NoOpCommand> {
+        return object : TelegramCommand<NoOpCommand>("feedback") {
+            override fun createProgressEntity(): NoOpCommand {
+                return NoOpCommand()
             }
         }.apply(operations)
     }
