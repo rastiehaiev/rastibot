@@ -39,7 +39,7 @@ spec:
             - name: RASTIBOT_USER_SERVICE_URL
               value: "rastibot-user-service:9294"
             - name: RASTIBOT_BIRTHDAY_REMINDER_SERVICE_URL
-              value: "rastibot-birthday-reminder-service:9294"
+              value: "rastibot-birthday-reminder-service:9292"
             - name: RASTIBOT_GOOGLE_CLOUD_PUB_SUB_TOPICS_CHECK_BIRTHDAY_REMINDER_EXISTS
               value: "prod-check-birthday-reminder-exists"
             - name: RASTIBOT_GOOGLE_CLOUD_PUB_SUB_TOPICS_CREATE_BIRTHDAY_REMINDER
@@ -75,6 +75,8 @@ spec:
         - name: rastibot-birthday-reminder-service
           image: eu.gcr.io/playaround-245909/rastibot-birthday-reminder-service:2.0.2
           imagePullPolicy: Always
+          ports:
+            - containerPort: 9292
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "production"
@@ -132,7 +134,7 @@ metadata:
     app: rastibot-birthday-reminder-service
 spec:
   ports:
-    - port: 9294
+    - port: 9292
       protocol: TCP
   selector:
     app: rastibot-user-service
