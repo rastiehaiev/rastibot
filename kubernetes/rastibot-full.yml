@@ -137,7 +137,7 @@ spec:
     - port: 9292
       protocol: TCP
   selector:
-    app: rastibot-user-service
+    app: rastibot-birthday-reminder-service
 
 ---
 apiVersion: apps/v1
