@@ -108,7 +108,7 @@ spec:
             - name: BIRTHDAY_REMINDER_SERVICE_BATCH_SIZE
               value: "100"
             - name: BIRTHDAY_REMINDER_SERVICE_SCHEDULE_CRON
-              value: "0 7 * * * *"
+              value: "0 0 8 * * *"
         - name: cloudsql-proxy
           image: gcr.io/cloudsql-docker/gce-proxy:1.14
           command: ["/cloud_sql_proxy",
