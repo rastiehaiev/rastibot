@@ -5,4 +5,4 @@ import org.springframework.boot.context.properties.ConstructorBinding
 
 @ConstructorBinding
 @ConfigurationProperties(prefix = "rastibot")
-class RastiBotProperties(val adminChatId: Long)
+class RastiBotProperties(val adminChatId: Long, val awarenessLevel: Int)

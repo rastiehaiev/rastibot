@@ -33,6 +33,7 @@ google-cloud:
 
 rastibot:
   admin-chat-id: ${RASTIBOT_ADMIN_CHAT_ID}
+  awareness-level: ${RASTIBOT_AWARENESS_LEVEL}
   user-service:
     url: ${RASTIBOT_USER_SERVICE_URL}
   birthday-reminder-service:

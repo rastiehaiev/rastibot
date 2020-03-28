@@ -2,6 +2,7 @@ package com.sbrati.rastibot.configuration
 
 import com.sbrati.rastibot.instruments.BirthDayHelper
 import com.sbrati.rastibot.model.*
+import com.sbrati.rastibot.properties.RastiBotProperties
 import com.sbrati.rastibot.service.BirthDayReminderService
 import com.sbrati.rastibot.service.StatisticsService
 import com.sbrati.rastibot.utils.chatDetails
@@ -19,6 +20,8 @@ import com.sbrati.spring.boot.starter.kotlin.telegram.operations.TelegramGlobalO
 import com.sbrati.spring.boot.starter.kotlin.telegram.operations.globalOperations
 import com.sbrati.spring.boot.starter.kotlin.telegram.resolver.MonthResolver
 import com.sbrati.spring.boot.starter.kotlin.telegram.service.LocaleSettingsService
+import com.sbrati.spring.boot.starter.kotlin.telegram.service.UserAwarenessService
+import com.sbrati.spring.boot.starter.kotlin.telegram.service.userAwarenessService
 import com.sbrati.spring.boot.starter.kotlin.telegram.util.LoggerDelegate
 import com.sbrati.spring.boot.starter.kotlin.telegram.view.TelegramView
 import com.sbrati.telegram.domain.StatusCode
@@ -43,6 +46,18 @@ open class RastiBotConfiguration {
                 .then("Українська" to Locale("uk"))
                 .then("Русский" to Locale("ru"))
     }
+
+    @Bean
+    open fun userAwarenessServiceSpec(properties: RastiBotProperties): UserAwarenessService {
+        return userAwarenessService {
+            awarenessLevel = properties.awarenessLevel
+            message = message {
+                key = "whatsnew.message"
+                parseMode = ParseMode.MARKDOWN
+            }
+        }
+    }
+
 
     @Bean
     open fun startCommand(): TelegramCommand<NoOpCommand> {
