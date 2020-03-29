@@ -75,7 +75,7 @@ spec:
     spec:
       containers:
         - name: rastibot-birthday-reminder-service
-          image: eu.gcr.io/playaround-245909/rastibot-birthday-reminder-service:2.0.3
+          image: eu.gcr.io/playaround-245909/rastibot-birthday-reminder-service:2.0.4
           imagePullPolicy: Always
           ports:
             - containerPort: 9292
