@@ -1,0 +1,85 @@
+---
+version: '3.1'
+
+services:
+
+  rastibot:
+    image: {{ sbraticom_registry }}/rastibot:{{ rastibot_version }}
+    environment:
+      SPRING_PROFILES_ACTIVE: "{{ spring_profile }}"
+      GOOGLE_APPLICATION_CREDENTIALS: "/etc/rastibot/creds/application-credentials.json"
+      TELEGRAM_TOKEN: "{{ telegram_token }}"
+      TELEGRAM_MODE: POLLING
+      RASTIBOT_ADMIN_CHAT_ID: "{{ rastibot_admin_chat_id }}"
+      RASTIBOT_AWARENESS_LEVEL: 1
+      RASTIBOT_GOOGLE_CLOUD_PROJECT_ID: "playaround-245909"
+      RASTIBOT_USER_SERVICE_URL: "rastibot-user-service:9294"
+      RASTIBOT_BIRTHDAY_REMINDER_SERVICE_URL: "rastibot-birthday-reminder-service:9292"
+      RASTIBOT_GOOGLE_CLOUD_PUB_SUB_TOPICS_CHECK_BIRTHDAY_REMINDER_EXISTS: "prod-check-birthday-reminder-exists"
+      RASTIBOT_GOOGLE_CLOUD_PUB_SUB_TOPICS_CREATE_BIRTHDAY_REMINDER: "prod-create-birthday-reminder"
+      RASTIBOT_GOOGLE_CLOUD_PUB_SUB_TOPICS_BIRTHDAY_REMINDER_NOTIFICATION_ACTION: "prod-birthday-reminder-notification-action"
+      RASTIBOT_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_CHECK_BIRTHDAY_REMINDER_RESULT: "prod-check-birthday-reminder-exists-result-subscription"
+      RASTIBOT_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_CREATE_BIRTHDAY_REMINDER_RESULT: "prod-create-birthday-reminder-result-subscription"
+      RASTIBOT_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_BIRTHDAY_REMINDER_NOTIFICATION: "prod-birthday-reminder-notification-subscription"
+      RASTIBOT_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_BIRTHDAY_REMINDER_NOTIFICATION_ACTION_RESULT: "prod-birthday-reminder-notification-action-result-subscription"
+    volumes:
+      - ~/creds:/etc/rastibot/creds
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: {{ deploy_restart_policy_delay }}
+        max_attempts: {{ deploy_restart_policy_max_attempts }}
+        window: {{ deploy_restart_policy_window }}
+
+  rastibot-birthday-reminder-service:
+    image: {{ sbraticom_registry }}/rastibot-birthday-reminder-service:{{ rastibot_birthday_reminder_service_version }}
+    environment:
+      SPRING_PROFILES_ACTIVE: "{{ spring_profile }}"
+      GOOGLE_APPLICATION_CREDENTIALS: "/etc/rastibot/creds/application-credentials.json"
+      DATASOURCE_URL: "cloud-sql-proxy:5432"
+      DATASOURCE_DBNAME: "rastibot_birthday_reminder_service"
+      DATASOURCE_PASSWORD: "{{ rastibot_birthday_reminder_service_datasource_password }}"
+      BIRTHDAY_REMINDER_GOOGLE_CLOUD_PROJECT_ID: "playaround-245909"
+      BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_TOPICS_CHECK_BIRTHDAY_REMINDER_EXISTS_RESULT: "prod-check-birthday-reminder-exists-result"
+      BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_TOPICS_CREATE_BIRTHDAY_REMINDER_RESULT: "prod-create-birthday-reminder-result"
+      BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_TOPICS_BIRTHDAY_REMINDER_NOTIFICATION: "prod-birthday-reminder-notification"
+      BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_TOPICS_BIRTHDAY_REMINDER_NOTIFICATION_ACTION_RESULT: "prod-birthday-reminder-notification-action-result"
+      BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_CHECK_BIRTHDAY_REMINDER_EXISTS: "prod-check-birthday-reminder-exists-subscription"
+      BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_CREATE_BIRTHDAY_REMINDER: "prod-create-birthday-reminder-subscription"
+      BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_BIRTHDAY_REMINDER_NOTIFICATION_ACTION: "prod-birthday-reminder-notification-action-subscription"
+      BIRTHDAY_REMINDER_SERVICE_SCHEDULE_BATCH_SIZE: 10
+      BIRTHDAY_REMINDER_SERVICE_SCHEDULE_CRON: "0 0 8 * * *"
+    volumes:
+      - ~/creds:/etc/rastibot/creds
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: {{ deploy_restart_policy_delay }}
+        max_attempts: {{ deploy_restart_policy_max_attempts }}
+        window: {{ deploy_restart_policy_window }}
+
+  rastibot-user-service:
+    image: {{ sbraticom_registry }}/rastibot-user-service:{{ rastibot_user_service_version }}
+    environment:
+      SPRING_PROFILES_ACTIVE: "{{ spring_profile }}"
+      DATASOURCE_URL: "cloud-sql-proxy:5432"
+      DATASOURCE_DBNAME: "rastibot_user_service"
+      DATASOURCE_PASSWORD: "{{ rastibot_user_service_datasource_password }}"
+
+  cloud-sql-proxy:
+    image: gcr.io/cloudsql-docker/gce-proxy:1.14
+    command: /cloud_sql_proxy -instances=playaround-245909:europe-west4:rastibot=tcp:0.0.0.0:5432 -credential_file=/etc/rastibot/creds/cloud-sql-proxy-credentials.json
+    volumes:
+      - ~/creds:/etc/rastibot/creds
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: {{ deploy_restart_policy_delay }}
+        max_attempts: {{ deploy_restart_policy_max_attempts }}
+        window: {{ deploy_restart_policy_window }}
