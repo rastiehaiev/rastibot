@@ -9,3 +9,5 @@ rastibot_user_service_version: 2.0.3
 deploy_restart_policy_delay: 5s
 deploy_restart_policy_max_attempts: 3
 deploy_restart_policy_window: 120s
+
+birthday_reminder_service_schedule_cron: "0 0 9 * * *"

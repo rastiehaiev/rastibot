@@ -1,2 +1,4 @@
 ---
 spring_profile: development
+
+birthday_reminder_service_schedule_cron: "0 1 * * * *"

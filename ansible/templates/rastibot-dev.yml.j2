@@ -13,7 +13,7 @@ services:
       TELEGRAM_MODE: POLLING
       RASTIBOT_ADMIN_CHAT_ID: "{{ rastibot_admin_chat_id }}"
       RASTIBOT_AWARENESS_LEVEL: "{{ rastibot_awareness_level }}"
-      RASTIBOT_GOOGLE_CLOUD_PROJECT_ID: "playaround-245909"
+      RASTIBOT_GOOGLE_CLOUD_PROJECT_ID: "{{ google_cloud_project_id }}"
       RASTIBOT_USER_SERVICE_URL: "rastibot-user-service:9294"
       RASTIBOT_BIRTHDAY_REMINDER_SERVICE_URL: "rastibot-birthday-reminder-service:9292"
       RASTIBOT_GOOGLE_CLOUD_PUB_SUB_TOPICS_CHECK_BIRTHDAY_REMINDER_EXISTS: "dev-check-birthday-reminder-exists"
@@ -33,16 +33,16 @@ services:
       DATASOURCE_URL: "postgres-birthday-reminder-service:5432"
       DATASOURCE_DBNAME: "rastibot_birthday_reminder_service"
       DATASOURCE_PASSWORD: "postgres_birthday_reminder_service_password"
-      BIRTHDAY_REMINDER_GOOGLE_CLOUD_PROJECT_ID: "playaround-245909"
+      BIRTHDAY_REMINDER_GOOGLE_CLOUD_PROJECT_ID: "{{ google_cloud_project_id }}"
       BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_TOPICS_CHECK_BIRTHDAY_REMINDER_EXISTS_RESULT: "dev-check-birthday-reminder-exists-result"
       BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_TOPICS_CREATE_BIRTHDAY_REMINDER_RESULT: "dev-create-birthday-reminder-result"
       BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_TOPICS_BIRTHDAY_REMINDER_NOTIFICATION: "dev-birthday-reminder-notification"
       BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_TOPICS_BIRTHDAY_REMINDER_NOTIFICATION_ACTION_RESULT: "dev-birthday-reminder-notification-action-result"
       BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_CHECK_BIRTHDAY_REMINDER_EXISTS: "dev-check-birthday-reminder-exists-subscription"
       BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_CREATE_BIRTHDAY_REMINDER: "dev-create-birthday-reminder-subscription"
-      BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_BIRTHDAY_REMINDER_NOTIFICATION_ACTION: "dev-birthday-reminder-notification-action-subscriber"
+      BIRTHDAY_REMINDER_SERVICE_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_BIRTHDAY_REMINDER_NOTIFICATION_ACTION: "dev-birthday-reminder-notification-action-subscription"
       BIRTHDAY_REMINDER_SERVICE_SCHEDULE_BATCH_SIZE: 10
-      BIRTHDAY_REMINDER_SERVICE_SCHEDULE_CRON: "0 0 8 * * *"
+      BIRTHDAY_REMINDER_SERVICE_SCHEDULE_CRON: "{{ birthday_reminder_service_schedule_cron }}"
   rastibot-user-service:
     image: {{ sbraticom_registry }}/rastibot-user-service:{{ rastibot_user_service_version }}
     environment:
