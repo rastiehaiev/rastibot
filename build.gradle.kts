@@ -20,7 +20,7 @@ repositories {
 }
 
 group = "com.sbrati.rastibot"
-version = "2.0.4"
+version = "2.0.5"
 
 dependencies {
     implementation(platform("org.springframework.cloud:spring-cloud-dependencies:Greenwich.RELEASE"))
@@ -30,7 +30,7 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("reflect"))
 
-    implementation("com.sbrati:spring-boot-starter-kotlin-telegram:1.0.5")
+    implementation("com.sbrati:spring-boot-starter-kotlin-telegram:2.0.2")
     implementation("com.sbrati:spring-boot-starter-kotlin-telegram-gcp-pubsub:1.0.3")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
@@ -47,19 +47,15 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     }
 }
 
-val gcpProjectId = project.properties["gcpProjectId"].toString()
-val gcpImageName = "eu.gcr.io/${gcpProjectId}/${project.name}"
 val sbratiImageName = "${project.properties["sbraticomDockerBaseImageName"].toString()}/${project.name}"
 
 docker {
     springBootApplication {
         baseImage.set("openjdk:11-jdk-slim")
         images.set(setOf(
-                "${gcpImageName}:${project.version}",
-                "${gcpImageName}:latest",
                 "${sbratiImageName}:${project.version}",
                 "${sbratiImageName}:latest"
         ))
-        jvmArgs.set(listOf("-Xmx2048m"))
+        jvmArgs.set(listOf("-Xmx1024m"))
     }
 }

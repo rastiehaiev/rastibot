@@ -48,18 +48,6 @@ open class RastiBotConfiguration {
     }
 
     @Bean
-    open fun userAwarenessServiceSpec(properties: RastiBotProperties): UserAwarenessService {
-        return userAwarenessService {
-            awarenessLevel = properties.awarenessLevel
-            message = message {
-                key = "whatsnew.message"
-                parseMode = ParseMode.MARKDOWN
-            }
-        }
-    }
-
-
-    @Bean
     open fun startCommand(): TelegramCommand<NoOpCommand> {
         return startCommand {
             stage("start") {
@@ -239,6 +227,25 @@ open class RastiBotConfiguration {
     }
 
     @Bean
+    open fun notifyAllCommand(): TelegramCommand<NoOpCommand> {
+        return notifyAll {
+            stage("notifyall") {
+                start { message { key = "notifyall.info.compose.message.to.all.users" } }
+                update { update, _ ->
+                    forwardUpdate {
+                        sender {
+                            message { key = "notifyall.info.message.has.been.sent" }
+                        }
+                        everyone {
+                            message { plainText = update.message?.text }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Bean
     open fun stats(statisticsService: StatisticsService): TelegramCommand<NoOpCommand> {
         return stats {
             stage("stats") {
@@ -298,6 +305,17 @@ open class RastiBotConfiguration {
         }
     }
 
+    @Bean
+    open fun userAwarenessServiceSpec(properties: RastiBotProperties): UserAwarenessService {
+        return userAwarenessService {
+            awarenessLevel = properties.awarenessLevel
+            message = message {
+                key = "whatsnew.message"
+                parseMode = ParseMode.MARKDOWN
+            }
+        }
+    }
+
     private fun startCommand(operations: TelegramCommand<NoOpCommand>.() -> Unit): TelegramCommand<NoOpCommand> {
         return object : TelegramCommand<NoOpCommand>("start") {
             override fun createProgressEntity(): NoOpCommand {
@@ -324,6 +342,14 @@ open class RastiBotConfiguration {
 
     private fun feedback(operations: TelegramCommand<NoOpCommand>.() -> Unit): TelegramCommand<NoOpCommand> {
         return object : TelegramCommand<NoOpCommand>("feedback") {
+            override fun createProgressEntity(): NoOpCommand {
+                return NoOpCommand()
+            }
+        }.apply(operations)
+    }
+
+    private fun notifyAll(operations: TelegramCommand<NoOpCommand>.() -> Unit): TelegramCommand<NoOpCommand> {
+        return object : TelegramCommand<NoOpCommand>("notifyall", admin = true) {
             override fun createProgressEntity(): NoOpCommand {
                 return NoOpCommand()
             }

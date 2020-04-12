@@ -56,16 +56,23 @@ class RastiBotUserService(private val userServiceClient: UserServiceClient) : Us
     }
 
     override fun findUninformedUserIds(informLevel: Int): List<Long> {
-        val uninformedUserIds = userServiceClient.findUninformedUserIds(informLevel)
-        if (uninformedUserIds.isEmpty()) {
-            logger.info("No users found to inform.")
+        return try {
+            val uninformedUserIds = userServiceClient.findUninformedUserIds(informLevel)
+            if (uninformedUserIds.isEmpty()) {
+                logger.info("No users found to inform.")
+            }
+            uninformedUserIds
+        } catch (e: Exception) {
+            logger.error("Failed to get uninformed users. Reason: ${e.message}.")
+            emptyList()
         }
-        return uninformedUserIds
     }
 
     override fun setUserInformLevel(chatId: Long, informLevel: Int) {
         userServiceClient.setUserInformLevel(chatId, informLevel)
     }
+
+    override fun getAllChatIds(): List<Long> = userServiceClient.getAllChatIds()
 
     private fun Chat.applyTo(user: User) {
         this.username?.let { user.userName = it }

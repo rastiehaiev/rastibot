@@ -21,4 +21,7 @@ interface UserServiceClient {
 
     @PutMapping("/users/chat/{id}/awareness")
     fun setUserInformLevel(@PathVariable("id") chatId: Long, @RequestParam("awareness") awareness: Int)
+
+    @GetMapping("/users/chat_ids")
+    fun getAllChatIds(): List<Long>
 }
