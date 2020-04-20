@@ -1,11 +1,11 @@
 package com.sbrati.rastibot.model
 
-import com.sbrati.spring.boot.starter.kotlin.telegram.command.TelegramCommandProgress
+import com.sbrati.spring.boot.starter.kotlin.telegram.command.Context
 import me.ivmg.telegram.entities.Contact
 import java.time.Month
 import java.time.Year
 
-class BirthDayReminder : TelegramCommandProgress() {
+class BirthDayReminder : Context() {
 
     var contact: Contact? = null
     lateinit var month: Month

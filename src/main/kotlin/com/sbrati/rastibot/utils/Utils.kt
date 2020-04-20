@@ -12,9 +12,9 @@ fun Person.fullName(): String {
     return this.firstName + (this.lastName?.prependIndent(" ") ?: "")
 }
 
-fun Update.chatDetails(): String {
+fun Update.fullName(): String {
     val from = this.message?.from ?: return "<unknown>"
-    return from.firstName + (from.lastName?.prependIndent(" ") ?: "") + "(id=${from.id})"
+    return from.firstName + (from.lastName?.prependIndent(" ") ?: "")
 }
 
 fun Boolean.status(): String {

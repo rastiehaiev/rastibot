@@ -5,7 +5,6 @@ import com.sbrati.rastibot.model.*
 import com.sbrati.rastibot.properties.RastiBotProperties
 import com.sbrati.rastibot.service.BirthDayReminderService
 import com.sbrati.rastibot.service.StatisticsService
-import com.sbrati.rastibot.utils.chatDetails
 import com.sbrati.rastibot.utils.fullName
 import com.sbrati.rastibot.utils.orUnknown
 import com.sbrati.rastibot.utils.status
@@ -15,6 +14,11 @@ import com.sbrati.spring.boot.starter.kotlin.telegram.component.RequestLimiter
 import com.sbrati.spring.boot.starter.kotlin.telegram.model.*
 import com.sbrati.spring.boot.starter.kotlin.telegram.model.callback.StringCallbackData
 import com.sbrati.spring.boot.starter.kotlin.telegram.model.callback.stringCallback
+import com.sbrati.spring.boot.starter.kotlin.telegram.model.message.EmptyMessage
+import com.sbrati.spring.boot.starter.kotlin.telegram.model.message.answerCallbackQuery
+import com.sbrati.spring.boot.starter.kotlin.telegram.model.message.forwardedMessage
+import com.sbrati.spring.boot.starter.kotlin.telegram.model.message.message
+import com.sbrati.spring.boot.starter.kotlin.telegram.model.replyview.*
 import com.sbrati.spring.boot.starter.kotlin.telegram.model.stages.nextStage
 import com.sbrati.spring.boot.starter.kotlin.telegram.operations.TelegramGlobalOperations
 import com.sbrati.spring.boot.starter.kotlin.telegram.operations.globalOperations
@@ -23,6 +27,7 @@ import com.sbrati.spring.boot.starter.kotlin.telegram.service.LocaleSettingsServ
 import com.sbrati.spring.boot.starter.kotlin.telegram.service.UserAwarenessService
 import com.sbrati.spring.boot.starter.kotlin.telegram.service.userAwarenessService
 import com.sbrati.spring.boot.starter.kotlin.telegram.util.LoggerDelegate
+import com.sbrati.spring.boot.starter.kotlin.telegram.util.chatId
 import com.sbrati.spring.boot.starter.kotlin.telegram.view.TelegramView
 import com.sbrati.telegram.domain.StatusCode
 import me.ivmg.telegram.entities.ParseMode
@@ -36,26 +41,16 @@ open class RastiBotConfiguration {
     private val logger by LoggerDelegate()
 
     @Bean
-    open fun requestLimiter(): RequestLimiter {
-        return RequestLimiter(allowedRequestsPerMinute = 40, banDurationSeconds = 120)
-    }
-
-    @Bean
-    open fun telegramSupportedLanguages(): TelegramSupportedLanguages {
-        return defaults("English" to Locale("en"))
-                .then("Українська" to Locale("uk"))
-                .then("Русский" to Locale("ru"))
-    }
-
-    @Bean
-    open fun startCommand(): TelegramCommand<NoOpCommand> {
-        return startCommand {
+    open fun commandStart(): TelegramCommand<NoOpCommand> {
+        return start {
             stage("start") {
-                start { progress ->
-                    message {
-                        key = "start.info.welcome.message"
-                        args = listOf(progress.firstName)
-                        parseMode = ParseMode.MARKDOWN
+                start { _, context ->
+                    finish {
+                        message {
+                            key = "start.info.welcome.message"
+                            args = listOf(context.firstName)
+                            parseMode = ParseMode.MARKDOWN
+                        }
                     }
                 }
             }
@@ -63,20 +58,24 @@ open class RastiBotConfiguration {
     }
 
     @Bean
-    open fun setLanguageCommand(view: TelegramView, localeSettingsService: LocaleSettingsService): TelegramCommand<NoOpCommand> {
+    open fun commandSetLanguage(view: TelegramView, localeSettingsService: LocaleSettingsService): TelegramCommand<NoOpCommand> {
         return setLanguage {
             stage("request_language") {
-                start {
+                start { _, _ ->
                     message {
                         key = "setlanguage.info.specify.language.from.the.list"
-                        keyboard = keyboard { row(view.supportedLanguagesButtons()) }
+                        replyView = keyboard { row(view.supportedLanguagesButtons()) }
                     }
                 }
-                text { _, text, progress ->
+                text { _, text, context ->
                     if (!localeSettingsService.isLanguageSupported(text)) {
-                        message(key = "setlanguage.error.unsupported.language.specified", args = listOf(progress.firstName))
+                        message {
+                            key = "setlanguage.error.unsupported.language.specified"
+                            args = listOf(context.firstName)
+                            replyView = NoReplyView
+                        }
                     } else {
-                        localeSettingsService.updateUserLanguagePreferences(progress.chatId!!, text)
+                        localeSettingsService.updateUserLanguagePreferences(context.chatId!!, text)
                         finish {
                             message(key = "setlanguage.info.language.settings.changed", args = listOf(text))
                         }
@@ -87,35 +86,32 @@ open class RastiBotConfiguration {
     }
 
     @Bean
-    open fun birthDayReminderCommand(monthResolver: MonthResolver,
-                                     birthDayHelper: BirthDayHelper,
-                                     reminderService: BirthDayReminderService): TelegramCommand<BirthDayReminder> {
-
+    open fun commandBirthDayReminder(monthResolver: MonthResolver, birthDayHelper: BirthDayHelper, reminderService: BirthDayReminderService): TelegramCommand<BirthDayReminder> {
         return birthdayReminder {
             stage("request_contact") {
-                start { progress ->
-                    message(key = "birthdayreminder.info.specify.contact", args = listOf(progress.firstName))
+                start { _, context ->
+                    message(key = "birthdayreminder.info.specify.contact", args = listOf(context.firstName))
                 }
-                contact { _, contact, progress ->
+                contact { _, contact, context ->
                     if (contact.userId == null) {
                         finish { message { key = "birthdayreminder.error.unable.to.create.reminder.for.contact.without.id" } }
                     } else {
-                        progress.contact = contact
+                        context.contact = contact
                         logger.debug("Received contact: $contact")
-                        reminderService.checkReminderAlreadyExists(progress)
+                        reminderService.checkReminderAlreadyExists(context)
                         nextStage()
                     }
                 }
             }
             stage("process_contact_validation") {
-                start { noMessage() }
-                event<CheckReminderExistsResult> { event, progress ->
+                start { _, _ -> EmptyMessage }
+                event<CheckReminderExistsResult> { event, context ->
                     val existingReminder = event.payload.existingReminder
                     if (existingReminder != null) {
                         message {
                             key = "birthdayreminder.warn.reminder.already.exists.for.contact"
-                            args = listOf(birthDayHelper.dateToString(progress.chatId!!, existingReminder.birthday))
-                            inlineKeyboard = inlineKeyboard {
+                            args = listOf(birthDayHelper.dateToString(context.chatId!!, existingReminder.birthday))
+                            replyView = inlineKeyboard {
                                 row(InlineKeyboardButton(key = "inline.button.update.existing.reminder", callbackData = stringCallback("update.existing.reminder")),
                                         InlineKeyboardButton(key = "inline.button.cancel.update.existing.reminder", callbackData = stringCallback("confirm.existing.reminder")))
                             }
@@ -124,8 +120,8 @@ open class RastiBotConfiguration {
                         nextStage()
                     }
                 }
-                callback<StringCallbackData>("update.existing.reminder") { _, _, progress ->
-                    progress.overrideExisting = true
+                callback<StringCallbackData>("update.existing.reminder") { _, _, context ->
+                    context.overrideExisting = true
                     nextStage()
                 }
                 callback<StringCallbackData>("confirm.existing.reminder") { _, _, _ ->
@@ -135,66 +131,70 @@ open class RastiBotConfiguration {
                 }
             }
             stage("request_month") {
-                start {
+                start { _, _ ->
                     message {
                         key = "birthdayreminder.info.specify.month"
-                        keyboard = months()
+                        replyView = months()
                     }
                 }
-                text { _, text, progress ->
-                    val month = monthResolver.resolve(text, progress.chatId!!)
+                text { _, text, context ->
+                    val month = monthResolver.resolve(text, context.chatId!!)
                     if (month == null) {
-                        message(key = "birthdayreminder.error.month.cannot.be.resolved", args = listOf(text))
+                        message {
+                            key = "birthdayreminder.error.month.cannot.be.resolved"
+                            args = listOf(text)
+                            replyView = NoReplyView
+                        }
                     } else {
-                        progress.month = month
+                        context.month = month
                         nextStage()
                     }
                 }
             }
             stage("request_day") {
-                start {
+                start { _, _ ->
                     message {
                         key = "birthdayreminder.info.specify.day"
                     }
                 }
-                text { _, text, progress ->
+                text { _, text, context ->
                     val day = text.toIntOrNull()
                     if (day == null) {
                         message(key = "birthdayreminder.error.day.cannot.be.resolved", args = listOf(text))
-                    } else if (day <= 0 || day > progress.month.length(true)) {
+                    } else if (day <= 0 || day > context.month.length(true)) {
                         message(key = "birthdayreminder.error.day.does.not.belong.to.month")
                     } else {
-                        progress.day = day
+                        context.day = day
                         nextStage()
                     }
                 }
             }
             stage("request_year") {
-                start {
+                start { _, _ ->
                     message {
                         key = "birthdayreminder.info.specify.year"
-                        keyboard = keyboard {
+                        replyView = keyboard {
                             row(KeyboardButton(key = "birthdayreminder.skip.the.year"))
                         }
                     }
                 }
-                text { _, text, progress ->
-                    progress.setYearFromText(text)
-                    reminderService.createReminder(progress)
+                text { _, text, context ->
+                    context.setYearFromText(text)
+                    reminderService.createReminder(context)
                     nextStage()
                 }
             }
             stage("check_reminder_creation") {
-                event<CreateReminderResult> { event, progress ->
+                event<CreateReminderResult> { event, context ->
                     if (event.statusCode != StatusCode.SUCCESS) {
                         finish {
-                            message(key = event.statusMessage, args = listOf(progress.contact!!.firstName))
+                            message(key = event.statusMessage, args = listOf(context.contact!!.firstName))
                         }
                     } else {
                         finish {
                             message {
                                 key = "birthdayreminder.info.reminder.created"
-                                args = listOf(progress.contact!!.fullName(), birthDayHelper.dateToString(progress.chatId!!, progress.getBirthday()))
+                                args = listOf(context.contact!!.fullName(), birthDayHelper.dateToString(context.chatId!!, context.getBirthday()))
                             }
                         }
                     }
@@ -204,20 +204,34 @@ open class RastiBotConfiguration {
     }
 
     @Bean
-    open fun feedbackCommand(): TelegramCommand<NoOpCommand> {
+    open fun commandFeedback(): TelegramCommand<NoOpCommand> {
         return feedback {
             stage("feedback") {
-                start { message { key = "feedback.info.specify.your.feedback" } }
-                text { update, text, _ ->
-                    compoundMessage {
-                        user {
-                            message { key = "feedback.info.thanks.for.your.feedback" }
-                        }
-                        admin {
-                            message {
-                                key = "feedback.info.admin.message"
-                                args = listOf(update.chatDetails(), text)
-                                parseMode = ParseMode.MARKDOWN
+                start { _, _ ->
+                    message { key = "feedback.info.specify.your.feedback" }
+                }
+                update { update, _ ->
+                    finish {
+                        route {
+                            sender {
+                                message { key = "feedback.info.thanks.for.your.feedback" }
+                            }
+                            admin {
+                                val chatId = update.chatId()
+                                forwardedMessage {
+                                    original = update
+                                    textWrapperKey = "feedback.info.admin.message"
+                                    args = listOf(update.fullName(), chatId.toString())
+                                    parseMode = ParseMode.MARKDOWN
+                                    replyView = chatId?.let {
+                                        inlineKeyboard {
+                                            row(InlineKeyboardButton(
+                                                    global = true,
+                                                    key = "inline.button.reply.feedback",
+                                                    callbackData = chatIdCallback("replfbck", chatId)))
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -227,17 +241,24 @@ open class RastiBotConfiguration {
     }
 
     @Bean
-    open fun notifyAllCommand(): TelegramCommand<NoOpCommand> {
+    open fun commandNotifyAll(): TelegramCommand<NoOpCommand> {
         return notifyAll {
             stage("notifyall") {
-                start { message { key = "notifyall.info.compose.message.to.all.users" } }
+                start { _, _ ->
+                    message { key = "notifyall.info.compose.message.to.all.users" }
+                }
                 update { update, _ ->
-                    forwardUpdate {
-                        sender {
-                            message { key = "notifyall.info.message.has.been.sent" }
-                        }
-                        everyone {
-                            message { plainText = update.message?.text }
+                    finish {
+                        route {
+                            sender {
+                                message { key = "notifyall.info.message.has.been.sent" }
+                            }
+                            everyone {
+                                forwardedMessage {
+                                    parseMode = ParseMode.MARKDOWN
+                                    original = update
+                                }
+                            }
                         }
                     }
                 }
@@ -246,19 +267,21 @@ open class RastiBotConfiguration {
     }
 
     @Bean
-    open fun stats(statisticsService: StatisticsService): TelegramCommand<NoOpCommand> {
+    open fun commandStats(statisticsService: StatisticsService): TelegramCommand<NoOpCommand> {
         return stats {
             stage("stats") {
-                start {
+                start { _, _ ->
                     val statistics = statisticsService.getStatistics()
-                    message {
-                        key = "stats.info.display.statistics.information"
-                        args = listOf(
-                                statistics.userServiceUp.status(),
-                                statistics.usersCount.orUnknown(),
-                                statistics.reminderServiceUp.status(),
-                                statistics.remindersCount.orUnknown())
-                        parseMode = ParseMode.MARKDOWN
+                    finish {
+                        message {
+                            key = "stats.info.display.statistics.information"
+                            args = listOf(
+                                    statistics.userServiceUp.status(),
+                                    statistics.usersCount.orUnknown(),
+                                    statistics.reminderServiceUp.status(),
+                                    statistics.remindersCount.orUnknown())
+                            parseMode = ParseMode.MARKDOWN
+                        }
                     }
                 }
             }
@@ -266,17 +289,52 @@ open class RastiBotConfiguration {
     }
 
     @Bean
-    open fun telegramGlobalOperations(birthDayHelper: BirthDayHelper,
-                                      reminderService: BirthDayReminderService): TelegramGlobalOperations {
+    open fun commandReplyFeedback(): TelegramCommand<ReplyFeedback> {
+        return replyFeedback {
+            stage("compose") {
+                start { update, context ->
+                    context.receiverChatId = update?.getChatIdFromCallbackData()
+                    message {
+                        key = "replyfeedback.compose.message.to.user"
+                    }
+                }
+                update { update, context ->
+                    finish {
+                        route {
+                            val receiverChatId = context.receiverChatId
+                            receiverChatId?.let {
+                                sender {
+                                    message {
+                                        key = "replyfeedback.message.has.been.sent"
+                                        parseMode = ParseMode.MARKDOWN
+                                    }
+                                }
+                                receiver(receiverChatId) {
+                                    forwardedMessage {
+                                        original = update
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Bean
+    open fun telegramGlobalOperations(birthDayHelper: BirthDayHelper, reminderService: BirthDayReminderService): TelegramGlobalOperations {
         return globalOperations {
             event<Notification> { event ->
                 val notification = event.payload
                 val birthday = notification.getBirthday()
+                val dateString = birthDayHelper.dateToString(notification.chatId, birthday)
+                val person = notification.person
                 message {
                     key = "birthdayreminder.notification.message.${notification.type.abbreviation}"
-                    args = listOf(notification.person.fullName(), birthDayHelper.dateToString(notification.chatId, birthday))
+                    args = listOf(person.fullName(), person.chatId.toString(), dateString)
                     parseMode = ParseMode.MARKDOWN
-                    inlineKeyboard = inlineKeyboard {
+                    replyView = inlineKeyboard {
                         for (action in notification.actions.orEmpty()) {
                             row(InlineKeyboardButton(
                                     global = true,
@@ -288,6 +346,9 @@ open class RastiBotConfiguration {
             }
             callback<NotificationActionCallback>("notificationaction") { update, callbackData ->
                 reminderService.reactOnNotificationAction(update, callbackData)
+            }
+            callback<ChatIdCallbackData>("replfbck") { update, callbackData ->
+                startNewCommand("replfbck")
             }
             event<NotificationActionResult> { event ->
                 answerCallbackQuery {
@@ -306,6 +367,18 @@ open class RastiBotConfiguration {
     }
 
     @Bean
+    open fun requestLimiter(): RequestLimiter {
+        return RequestLimiter(allowedRequestsPerMinute = 40, banDurationSeconds = 120)
+    }
+
+    @Bean
+    open fun telegramSupportedLanguages(): TelegramSupportedLanguages {
+        return defaults("English" to Locale("en"))
+                .then("Українська" to Locale("uk"))
+                .then("Русский" to Locale("ru"))
+    }
+
+    // @Bean
     open fun userAwarenessServiceSpec(properties: RastiBotProperties): UserAwarenessService {
         return userAwarenessService {
             awarenessLevel = properties.awarenessLevel
@@ -316,9 +389,9 @@ open class RastiBotConfiguration {
         }
     }
 
-    private fun startCommand(operations: TelegramCommand<NoOpCommand>.() -> Unit): TelegramCommand<NoOpCommand> {
+    private fun start(operations: TelegramCommand<NoOpCommand>.() -> Unit): TelegramCommand<NoOpCommand> {
         return object : TelegramCommand<NoOpCommand>("start") {
-            override fun createProgressEntity(): NoOpCommand {
+            override fun createContext(): NoOpCommand {
                 return NoOpCommand()
             }
         }.apply(operations)
@@ -326,7 +399,7 @@ open class RastiBotConfiguration {
 
     private fun setLanguage(operations: TelegramCommand<NoOpCommand>.() -> Unit): TelegramCommand<NoOpCommand> {
         return object : TelegramCommand<NoOpCommand>("setlanguage") {
-            override fun createProgressEntity(): NoOpCommand {
+            override fun createContext(): NoOpCommand {
                 return NoOpCommand()
             }
         }.apply(operations)
@@ -334,7 +407,7 @@ open class RastiBotConfiguration {
 
     private fun birthdayReminder(operations: TelegramCommand<BirthDayReminder>.() -> Unit): TelegramCommand<BirthDayReminder> {
         return object : TelegramCommand<BirthDayReminder>("birthdayreminder") {
-            override fun createProgressEntity(): BirthDayReminder {
+            override fun createContext(): BirthDayReminder {
                 return BirthDayReminder()
             }
         }.apply(operations)
@@ -342,7 +415,7 @@ open class RastiBotConfiguration {
 
     private fun feedback(operations: TelegramCommand<NoOpCommand>.() -> Unit): TelegramCommand<NoOpCommand> {
         return object : TelegramCommand<NoOpCommand>("feedback") {
-            override fun createProgressEntity(): NoOpCommand {
+            override fun createContext(): NoOpCommand {
                 return NoOpCommand()
             }
         }.apply(operations)
@@ -350,16 +423,24 @@ open class RastiBotConfiguration {
 
     private fun notifyAll(operations: TelegramCommand<NoOpCommand>.() -> Unit): TelegramCommand<NoOpCommand> {
         return object : TelegramCommand<NoOpCommand>("notifyall", admin = true) {
-            override fun createProgressEntity(): NoOpCommand {
+            override fun createContext(): NoOpCommand {
                 return NoOpCommand()
             }
         }.apply(operations)
     }
 
     private fun stats(operations: TelegramCommand<NoOpCommand>.() -> Unit): TelegramCommand<NoOpCommand> {
-        return object : TelegramCommand<NoOpCommand>("stats") {
-            override fun createProgressEntity(): NoOpCommand {
+        return object : TelegramCommand<NoOpCommand>("stats", admin = true) {
+            override fun createContext(): NoOpCommand {
                 return NoOpCommand()
+            }
+        }.apply(operations)
+    }
+
+    private fun replyFeedback(operations: TelegramCommand<ReplyFeedback>.() -> Unit): TelegramCommand<ReplyFeedback> {
+        return object : TelegramCommand<ReplyFeedback>("replfbck", admin = true, synthetic = true) {
+            override fun createContext(): ReplyFeedback {
+                return ReplyFeedback()
             }
         }.apply(operations)
     }
