@@ -24,6 +24,8 @@ services:
       RASTIBOT_GOOGLE_CLOUD_PUB_SUB_SUBSCRIPTIONS_BIRTHDAY_REMINDER_NOTIFICATION_ACTION_RESULT: "prod-birthday-reminder-notification-action-result-subscription"
     volumes:
       - ~/creds:/etc/rastibot/creds
+    logging:
+      driver: gcplogs
     deploy:
       mode: replicated
       replicas: 1
@@ -53,6 +55,8 @@ services:
       BIRTHDAY_REMINDER_SERVICE_SCHEDULE_CRON: "{{ birthday_reminder_service_schedule_cron }}"
     volumes:
       - ~/creds:/etc/rastibot/creds
+    logging:
+      driver: gcplogs
     deploy:
       mode: replicated
       replicas: 1
@@ -64,6 +68,8 @@ services:
 
   rastibot-user-service:
     image: {{ sbraticom_registry }}/rastibot-user-service:{{ rastibot_user_service_version }}
+    logging:
+      driver: gcplogs
     environment:
       SPRING_PROFILES_ACTIVE: "{{ spring_profile }}"
       DATASOURCE_URL: "cloud-sql-proxy:5432"

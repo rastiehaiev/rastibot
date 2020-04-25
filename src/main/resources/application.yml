@@ -3,6 +3,13 @@
 spring:
   application:
     name: rastibot
+  main:
+    banner-mode: off
+
+logging:
+  config: classpath:com/sbrati/logging/gcp/logging-config.xml
+  level:
+    root: INFO
 
 telegram:
   token: ${TELEGRAM_TOKEN}

@@ -20,7 +20,7 @@ repositories {
 }
 
 group = "com.sbrati.rastibot"
-version = "2.0.6"
+version = "2.0.7"
 
 dependencies {
     implementation(platform("org.springframework.cloud:spring-cloud-dependencies:Greenwich.RELEASE"))
@@ -30,8 +30,10 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("reflect"))
 
+    implementation("com.sbrati:spring-boot-starter-gcp-logging:1.0.0")
     implementation("com.sbrati:spring-boot-starter-kotlin-telegram:2.0.25")
     implementation("com.sbrati:spring-boot-starter-kotlin-telegram-gcp-pubsub:1.0.3")
+
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
 

@@ -347,7 +347,7 @@ open class RastiBotConfiguration {
             callback<NotificationActionCallback>("notificationaction") { update, callbackData ->
                 reminderService.reactOnNotificationAction(update, callbackData)
             }
-            callback<ChatIdCallbackData>("replfbck") { update, callbackData ->
+            callback<ChatIdCallbackData>("replfbck") { _, _ ->
                 startNewCommand("replfbck")
             }
             event<NotificationActionResult> { event ->
