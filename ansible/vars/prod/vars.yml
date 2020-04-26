@@ -1,2 +1,4 @@
 ---
 spring_profile: production
+
+logging_config: classpath:com/sbrati/logging/gcp/logging-config.xml

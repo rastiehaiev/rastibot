@@ -7,7 +7,7 @@ spring:
     banner-mode: off
 
 logging:
-  config: classpath:com/sbrati/logging/gcp/logging-config.xml
+  config: ${LOGGING_CONFIG}
   level:
     root: INFO
 

@@ -7,6 +7,8 @@ services:
     image: {{ sbraticom_registry }}/rastibot:{{ rastibot_version }}
     environment:
       SPRING_PROFILES_ACTIVE: "{{ spring_profile }}"
+      SPRING_BOOT_APPLICATION_NAME: "rastibot"
+      LOGGING_CONFIG: "{{ logging_config }}"
       GOOGLE_APPLICATION_CREDENTIALS: "/etc/rastibot/creds/application-credentials.json"
       TELEGRAM_TOKEN: "{{ telegram_token }}"
       TELEGRAM_MODE: POLLING
@@ -39,6 +41,8 @@ services:
     image: {{ sbraticom_registry }}/rastibot-birthday-reminder-service:{{ rastibot_birthday_reminder_service_version }}
     environment:
       SPRING_PROFILES_ACTIVE: "{{ spring_profile }}"
+      SPRING_BOOT_APPLICATION_NAME: "rastibot-birthday-reminder-service"
+      LOGGING_CONFIG: "{{ logging_config }}"
       GOOGLE_APPLICATION_CREDENTIALS: "/etc/rastibot/creds/application-credentials.json"
       DATASOURCE_URL: "cloud-sql-proxy:5432"
       DATASOURCE_DBNAME: "rastibot_birthday_reminder_service"
@@ -72,6 +76,8 @@ services:
       driver: gcplogs
     environment:
       SPRING_PROFILES_ACTIVE: "{{ spring_profile }}"
+      SPRING_BOOT_APPLICATION_NAME: "rastibot-user-service"
+      LOGGING_CONFIG: "{{ logging_config }}"
       DATASOURCE_URL: "cloud-sql-proxy:5432"
       DATASOURCE_DBNAME: "rastibot_user_service"
       DATASOURCE_PASSWORD: "{{ rastibot_user_service_datasource_password }}"
