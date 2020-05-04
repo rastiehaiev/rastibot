@@ -2,8 +2,8 @@ rastibot_awareness_level: 1
 
 sbraticom_registry: "sbrati.registry.jetbrains.space/sbrati-registry"
 
-rastibot_version: 2.0.11
-rastibot_birthday_reminder_service_version: 2.0.6
+rastibot_version: 2.0.12
+rastibot_birthday_reminder_service_version: 2.0.8
 rastibot_user_service_version: 2.0.6
 
 deploy_restart_policy_delay: 5s

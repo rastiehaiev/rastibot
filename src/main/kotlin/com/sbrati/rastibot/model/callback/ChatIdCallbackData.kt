@@ -1,4 +1,4 @@
-package com.sbrati.rastibot.model
+package com.sbrati.rastibot.model.callback
 
 import com.sbrati.spring.boot.starter.kotlin.telegram.model.callback.CallbackDataObject
 import me.ivmg.telegram.entities.Update

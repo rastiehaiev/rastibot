@@ -6,5 +6,4 @@ import org.springframework.stereotype.Component
 
 @Component
 class CreateBirthdayReminderResultSubscriber
-    : GcpPubSubTelegramSubscriber<CreateReminderResult>(CreateReminderResult::class.java, "create-birthday-reminder-result") {
-}
+    : GcpPubSubTelegramSubscriber<CreateReminderResult>(CreateReminderResult::class.java, "create-birthday-reminder-result")

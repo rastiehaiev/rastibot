@@ -1,5 +1,6 @@
 package com.sbrati.rastibot.client
 
+import com.sbrati.rastibot.model.BirthdayStatistics
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.web.bind.annotation.GetMapping
 
@@ -8,4 +9,7 @@ interface BirthdayReminderServiceClient {
 
     @GetMapping("/reminders/count")
     fun count(): Long
+
+    @GetMapping("/reminders/stats")
+    fun stats(): BirthdayStatistics
 }

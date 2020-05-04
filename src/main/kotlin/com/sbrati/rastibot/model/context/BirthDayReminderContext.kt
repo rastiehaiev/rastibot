@@ -1,11 +1,12 @@
-package com.sbrati.rastibot.model
+package com.sbrati.rastibot.model.context
 
+import com.sbrati.rastibot.model.Birthday
 import com.sbrati.spring.boot.starter.kotlin.telegram.command.Context
 import me.ivmg.telegram.entities.Contact
 import java.time.Month
 import java.time.Year
 
-class BirthDayReminder : Context() {
+class BirthDayReminderContext : Context() {
 
     var contact: Contact? = null
     lateinit var month: Month
@@ -18,13 +19,13 @@ class BirthDayReminder : Context() {
     }
 }
 
-fun BirthDayReminder.setYearFromText(text: String) {
+fun BirthDayReminderContext.setYearFromText(text: String) {
     val year = text.toIntOrNull()
     if (year != null && year < Year.now().value && year > 1900) {
         this.year = year
     }
 }
 
-fun BirthDayReminder.getBirthday(): Birthday {
+fun BirthDayReminderContext.getBirthday(): Birthday {
     return Birthday(this.day!!, this.month, this.year)
 }
