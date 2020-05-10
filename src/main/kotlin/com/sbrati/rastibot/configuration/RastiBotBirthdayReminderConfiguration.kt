@@ -12,6 +12,7 @@ import com.sbrati.rastibot.model.context.BirthdayReminderListContext
 import com.sbrati.rastibot.model.context.getBirthday
 import com.sbrati.rastibot.model.context.setYearFromText
 import com.sbrati.rastibot.service.BirthDayReminderService
+import com.sbrati.rastibot.utils.asPerson
 import com.sbrati.rastibot.utils.fullName
 import com.sbrati.spring.boot.starter.kotlin.telegram.command.TelegramCommand
 import com.sbrati.spring.boot.starter.kotlin.telegram.model.MultipleResults
@@ -42,7 +43,7 @@ open class RastiBotBirthdayReminderConfiguration(
     @Bean
     open fun commandBirthDayReminder(): TelegramCommand<BirthDayReminderContext> {
         return birthdayReminder {
-            stage("request_contact") {
+            stage("request_person") {
                 start { _, context ->
                     message(key = "birthdayreminder.info.specify.contact", args = listOf(context.firstName))
                 }
@@ -50,7 +51,16 @@ open class RastiBotBirthdayReminderConfiguration(
                     if (contact.userId == null) {
                         finish { message { key = "birthdayreminder.error.unable.to.create.reminder.for.contact.without.id" } }
                     } else {
-                        context.contact = contact
+                        context.person = contact.asPerson()
+                        reminderService.checkReminderAlreadyExists(context)
+                        nextStage()
+                    }
+                }
+                forwardedUser { _, user, context ->
+                    if (user.isBot) {
+                        message { key = "birthdayreminder.error.unable.to.create.reminder.for.bot" }
+                    } else {
+                        context.person = user.asPerson()
                         reminderService.checkReminderAlreadyExists(context)
                         nextStage()
                     }
@@ -146,16 +156,18 @@ open class RastiBotBirthdayReminderConfiguration(
                 }
             }
             stage("check_reminder_creation") {
+                start { _, _ -> EmptyMessage }
                 event<CreateReminderResult> { event, context ->
                     if (event.statusCode != StatusCode.SUCCESS) {
                         finish {
-                            message(key = event.statusMessage, args = listOf(context.contact!!.firstName))
+                            message(key = event.statusMessage, args = listOf(context.person!!.firstName))
                         }
                     } else {
                         finish {
                             message {
                                 key = "birthdayreminder.info.reminder.created"
-                                args = listOf(context.contact!!.fullName(), dateHelper.dateToString(context.chatId!!, context.getBirthday()))
+                                parseMode = ParseMode.MARKDOWN
+                                args = listOf(context.person!!.fullName(), context.person!!.chatId.toString(), dateHelper.dateToString(context.chatId!!, context.getBirthday()))
                             }
                         }
                     }

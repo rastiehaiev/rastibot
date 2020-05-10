@@ -1,3 +1,3 @@
 package com.sbrati.rastibot.model
 
-class BirthdayStatistics(val total: Long, val active: Long)
+data class BirthdayStatistics(val total: Long, val active: Long)

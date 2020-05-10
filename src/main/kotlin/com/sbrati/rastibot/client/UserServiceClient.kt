@@ -1,6 +1,7 @@
 package com.sbrati.rastibot.client
 
 import com.sbrati.rastibot.model.User
+import com.sbrati.rastibot.model.UserStatistics
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.web.bind.annotation.*
 
@@ -13,8 +14,8 @@ interface UserServiceClient {
     @PutMapping("/users/chat/{id}")
     fun createOrUpdate(@PathVariable("id") chatId: Long, @RequestBody user: User)
 
-    @GetMapping("/users/count")
-    fun count(): Long
+    @GetMapping("/users/stats")
+    fun stats(): UserStatistics
 
     @GetMapping("/users/uninformed")
     fun findUninformedUserIds(@RequestParam("awareness") awareness: Int): List<Long>

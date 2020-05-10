@@ -21,7 +21,7 @@ class BirthDayReminderService(private val checkBirthDayReminderExistsPublisher: 
     private val logger by LoggerDelegate()
 
     fun checkReminderAlreadyExists(reminder: BirthDayReminderContext) {
-        val request = CheckReminderExistsRequest(reminder.chatId!!, reminder.contact!!.userId!!)
+        val request = CheckReminderExistsRequest(reminder.chatId!!, reminder.person!!.chatId)
         val event = createEvent(reminder.chatId!!, request)
         logger.info("Checking if reminder exists: ${request}.")
         checkBirthDayReminderExistsPublisher.publish(event)
@@ -36,8 +36,7 @@ class BirthDayReminderService(private val checkBirthDayReminderExistsPublisher: 
 
     fun createReminder(reminder: BirthDayReminderContext) {
         val chatId = reminder.chatId!!
-        val contact = reminder.contact!!
-        val person = Person(contact.userId!!, contact.firstName, contact.lastName)
+        val person = reminder.person!!
         val birthday = Birthday(reminder.day!!, reminder.month, reminder.year)
         val request = CreateReminderRequest(chatId, person, birthday, reminder.overrideExisting)
         val event = createEvent(chatId, request)

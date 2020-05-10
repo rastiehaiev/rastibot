@@ -55,7 +55,8 @@ open class RastiBotSystemOperationsConfiguration {
                             key = "stats.info.display.statistics.information"
                             args = listOf(
                                     statistics.userServiceUp.status(),
-                                    statistics.usersCount.orUnknown(),
+                                    statistics.usersCountTotal.orUnknown(),
+                                    statistics.usersCountActive.orUnknown(),
                                     statistics.reminderServiceUp.status(),
                                     statistics.remindersCountTotal.orUnknown(),
                                     statistics.remindersCountActive.orUnknown())

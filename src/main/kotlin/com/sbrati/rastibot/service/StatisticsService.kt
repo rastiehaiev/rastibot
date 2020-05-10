@@ -13,11 +13,12 @@ class StatisticsService(private val userServiceClient: UserServiceClient,
     private val logger by LoggerDelegate()
 
     fun getStatistics(): Statistics {
-        val (userServiceUp, usersCount) = try {
-            Pair(true, userServiceClient.count())
+        val (userServiceUp, usersCountTotal, usersCountActive) = try {
+            val stats = userServiceClient.stats()
+            Triple(true, stats.total, stats.active)
         } catch (e: Exception) {
             logger.error("Probably, User Service is unavailable.", e)
-            Pair(false, null)
+            Triple(false, null, null)
         }
         val (reminderServiceUp, remindersCountTotal, remindersCountActive) = try {
             val stats = birthdayReminderServiceClient.stats()
@@ -26,6 +27,6 @@ class StatisticsService(private val userServiceClient: UserServiceClient,
             logger.error("Probably, Birthday Reminder Service is unavailable.", e)
             Triple(false, null, null)
         }
-        return Statistics(userServiceUp, usersCount, reminderServiceUp, remindersCountTotal, remindersCountActive)
+        return Statistics(userServiceUp, usersCountTotal, usersCountActive, reminderServiceUp, remindersCountTotal, remindersCountActive)
     }
 }
