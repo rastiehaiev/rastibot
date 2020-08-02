@@ -64,15 +64,29 @@ services:
       DATASOURCE_URL: "postgres-user-service:5432"
       DATASOURCE_DBNAME: "rastibot_user_service"
       DATASOURCE_PASSWORD: "postgres_user_service_password"
-  postgres-birthday-reminder-service:
-    image: sameersbn/postgresql:10-2
-    environment:
-      DB_NAME: "rastibot_birthday_reminder_service"
-      DB_USER: "rastibot-birthday-reminder-service"
-      DB_PASS: "postgres_birthday_reminder_service_password"
+
   postgres-user-service:
     image: sameersbn/postgresql:10-2
     environment:
       DB_NAME: "rastibot_user_service"
       DB_USER: "rastibot-user-service"
       DB_PASS: "postgres_user_service_password"
+    ports:
+      - "5434:5432"
+    volumes:
+      - "ruserservice:/var/lib/postgresql"
+
+  postgres-birthday-reminder-service:
+    image: sameersbn/postgresql:10-2
+    environment:
+      DB_NAME: "rastibot_birthday_reminder_service"
+      DB_USER: "rastibot-birthday-reminder-service"
+      DB_PASS: "postgres_birthday_reminder_service_password"
+    ports:
+      - "5435:5432"
+    volumes:
+      - "rbreminderservice:/var/lib/postgresql"
+
+volumes:
+  ruserservice:
+  rbreminderservice:
