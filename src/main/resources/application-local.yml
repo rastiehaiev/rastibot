@@ -6,9 +6,9 @@ spring:
   main:
     banner-mode: off
   datasource:
-    url: jdbc:postgresql://${DATASOURCE_URL}/${DATASOURCE_DBNAME}
+    url: jdbc:postgresql://localhost:5435/rastibot
     username: rastibot
-    password: ${DATASOURCE_PASSWORD}
+    password: rastibot
     driver-class-name: org.postgresql.Driver
   flyway:
     enabled: on
@@ -20,16 +20,15 @@ spring:
 
 logging:
   level:
-    com.sbrati: INFO
     root: INFO
 
 telegram:
-  token: ${TELEGRAM_TOKEN}
-  mode: ${TELEGRAM_MODE}
-  logLevel: none
+  token: "937446757:AAHlbAXTcp-whFMHew2C1IxesL7Y4X0eOhE"
+  mode: POLLING
+  logLevel: Body
 
 rastibot:
-  admin-chat-id: ${RASTIBOT_ADMIN_CHAT_ID}
+  admin-chat-id: 228089372
   birthday-reminder-service:
     schedule:
       enabled: true

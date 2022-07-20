@@ -1,0 +1,28 @@
+---
+version: '3.1'
+
+services:
+  rastibot:
+    image: sbrati.registry.jetbrains.space/p/rasti/rasti-containers/rastibot:latest
+    environment:
+      SPRING_PROFILES_ACTIVE: "production"
+      SPRING_BOOT_APPLICATION_NAME: "rastibot"
+      TELEGRAM_TOKEN: "869303274:AAGgkfO-g_wKYlgyU5HgYNUN_z5wnffvXhk"
+      TELEGRAM_MODE: POLLING
+      RASTIBOT_ADMIN_CHAT_ID: "228089372"
+      DATASOURCE_URL: "postgres:5432"
+      DATASOURCE_DBNAME: "rastibot"
+      DATASOURCE_PASSWORD: "rastibot"
+  postgres:
+    image: sameersbn/postgresql:10-2
+    environment:
+      DB_NAME: "rastibot"
+      DB_USER: "rastibot"
+      DB_PASS: "rastibot"
+    ports:
+      - "5435:5432"
+    volumes:
+      - "rb:/var/lib/postgresql"
+
+volumes:
+  rb:

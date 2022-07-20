@@ -1,7 +1,10 @@
 package com.sbrati.rastibot.service
 
-import com.sbrati.rastibot.client.UserServiceClient
+import com.github.kotlintelegrambot.entities.Chat
+import com.github.kotlintelegrambot.entities.Update
+import com.sbrati.rastibot.entity.UserEntity
 import com.sbrati.rastibot.model.User
+import com.sbrati.rastibot.repository.UserRepository
 import com.sbrati.spring.boot.starter.kotlin.telegram.component.BlockedChatHandler
 import com.sbrati.spring.boot.starter.kotlin.telegram.service.AwarenessService
 import com.sbrati.spring.boot.starter.kotlin.telegram.service.LocaleService
@@ -9,21 +12,23 @@ import com.sbrati.spring.boot.starter.kotlin.telegram.service.UserService
 import com.sbrati.spring.boot.starter.kotlin.telegram.util.LoggerDelegate
 import com.sbrati.spring.boot.starter.kotlin.telegram.util.chatId
 import com.sbrati.spring.boot.starter.kotlin.telegram.util.orElse
-import me.ivmg.telegram.entities.Chat
-import me.ivmg.telegram.entities.Update
 import org.springframework.stereotype.Service
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 
 @Service
-class RastiBotUserService(private val userServiceClient: UserServiceClient)
-    : UserService<User>, AwarenessService, BlockedChatHandler, LocaleService {
+class RastiBotUserService(
+    private val userRepository: UserRepository,
+    private val spaceNotificationService: SpaceNotificationService,
+) : UserService<User>, AwarenessService, BlockedChatHandler, LocaleService {
 
     private val logger by LoggerDelegate()
 
     private val cache: MutableMap<Long, User> = ConcurrentHashMap()
 
-    override fun getAllChatIds(): List<Long> = userServiceClient.getAllChatIds()
+    override fun getAllChatIds(): List<Long> {
+        return userRepository.findAll().map { it.chatId }
+    }
 
     override fun findByChatId(chatId: Long): User? {
         val user: User? = cache[chatId].orElse { getUser(chatId) }
@@ -33,7 +38,7 @@ class RastiBotUserService(private val userServiceClient: UserServiceClient)
 
     private fun getUser(chatId: Long): User? {
         return try {
-            userServiceClient.findByChatId(chatId)
+            userRepository.findByChatId(chatId)?.toUser()
         } catch (e: Exception) {
             logger.error("Failed to find user by chatID=${chatId}. Reason: ${e.message}.")
             null
@@ -59,7 +64,26 @@ class RastiBotUserService(private val userServiceClient: UserServiceClient)
     override fun saveOrUpdate(user: User) {
         try {
             logger.debug("Creating user {}.", user)
-            userServiceClient.createOrUpdate(user.chatId!!, user)
+
+            var newUser = false
+            val chatId = user.chatId ?: return
+            var entity = userRepository.findByChatId(chatId)
+            if (entity == null) {
+                entity = UserEntity()
+                entity.chatId = chatId
+                newUser = true
+            }
+            entity.locale = user.locale
+            entity.username = user.username
+            entity.firstName = user.firstName
+            entity.lastName = user.lastName
+            entity.inactive = user.inactive
+            userRepository.save(entity)
+
+            if (newUser) {
+                spaceNotificationService.onNewUser(user)
+            }
+
             cache[user.chatId!!] = user
         } catch (e: Exception) {
             logger.error("Failed to create/update user. Reason: ${e.message}.")
@@ -77,7 +101,7 @@ class RastiBotUserService(private val userServiceClient: UserServiceClient)
 
     override fun findUninformedUserIds(informLevel: Int): List<Long> {
         return try {
-            val uninformedUserIds = userServiceClient.findUninformedUserIds(informLevel)
+            val uninformedUserIds = userRepository.findByInactiveFalseAndAwarenessNullOrAwarenessLessThan(informLevel).map { it.chatId }
             if (uninformedUserIds.isEmpty()) {
                 logger.info("No users found to inform.")
             }
@@ -89,7 +113,7 @@ class RastiBotUserService(private val userServiceClient: UserServiceClient)
     }
 
     override fun setUserInformLevel(chatId: Long, informLevel: Int) {
-        userServiceClient.setUserInformLevel(chatId, informLevel)
+        userRepository.setAwareness(chatId, informLevel)
     }
 
     override fun findLocaleByChatId(chatId: Long): Locale? {
@@ -110,9 +134,20 @@ class RastiBotUserService(private val userServiceClient: UserServiceClient)
         this.lastName?.let { user.lastName = it }
     }
 
-    private fun me.ivmg.telegram.entities.User.applyTo(user: User) {
+    private fun com.github.kotlintelegrambot.entities.User.applyTo(user: User) {
         this.username?.let { user.username = it }
         this.firstName.let { user.firstName = it }
         this.lastName?.let { user.lastName = it }
+    }
+
+    private fun UserEntity.toUser(): User {
+        return User(
+            chatId = this.chatId,
+            username = this.username,
+            firstName = this.firstName,
+            lastName = this.lastName,
+            locale = this.locale,
+            inactive = this.inactive,
+        )
     }
 }

@@ -1,7 +1,7 @@
 package com.sbrati.rastibot.model.callback
 
+import com.github.kotlintelegrambot.entities.Update
 import com.sbrati.spring.boot.starter.kotlin.telegram.model.callback.CallbackDataObject
-import me.ivmg.telegram.entities.Update
 
 class ChatIdCallbackData : CallbackDataObject() {
 

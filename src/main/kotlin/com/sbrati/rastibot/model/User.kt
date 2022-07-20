@@ -1,11 +1,13 @@
 package com.sbrati.rastibot.model
 
-class User(var chatId: Long? = null,
-           var username: String? = null,
-           var firstName: String? = null,
-           var lastName: String? = null,
-           var locale: String? = null,
-           var inactive: Boolean = false) {
+class User(
+    var chatId: Long? = null,
+    var username: String? = null,
+    var firstName: String? = null,
+    var lastName: String? = null,
+    var locale: String? = null,
+    var inactive: Boolean = false
+) {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

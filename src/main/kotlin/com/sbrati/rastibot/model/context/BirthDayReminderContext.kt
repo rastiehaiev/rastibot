@@ -1,6 +1,7 @@
 package com.sbrati.rastibot.model.context
 
 import com.sbrati.rastibot.model.Birthday
+import com.sbrati.rastibot.model.CreateBirthdayReminderRequest
 import com.sbrati.rastibot.model.Person
 import com.sbrati.spring.boot.starter.kotlin.telegram.command.Context
 import java.time.Month
@@ -28,4 +29,14 @@ fun BirthDayReminderContext.setYearFromText(text: String) {
 
 fun BirthDayReminderContext.getBirthday(): Birthday {
     return Birthday(this.day!!, this.month, this.year)
+}
+
+fun BirthDayReminderContext.toBirthdayReminder(): CreateBirthdayReminderRequest {
+    val birthday = this.getBirthday()
+    val person = this.person!!
+    return CreateBirthdayReminderRequest(
+        this.chatId!!,
+        person,
+        birthday,
+    )
 }

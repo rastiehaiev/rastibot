@@ -6,6 +6,5 @@ out
 
 # Ignore porject files and directories
 .idea
-.deploy
 *.iml
 application-local.yml
