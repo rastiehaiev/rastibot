@@ -23,7 +23,7 @@ logging:
     root: INFO
 
 telegram:
-  token: "937446757:AAHlbAXTcp-whFMHew2C1IxesL7Y4X0eOhE"
+  token: "DO-NOT-COMMIT-KEYS"
   mode: POLLING
   logLevel: Body
 
